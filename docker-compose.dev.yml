@@ -64,6 +64,9 @@ services:
       # Application
       - HOME_RECENT_HOURS=${HOME_RECENT_HOURS:-24}
       - ENABLE_CGI=${ENABLE_CGI:-false}
+      # Streamed play for games that can't run in a browser (off unless both are set)
+      - STREAMING_API_URL=${STREAMING_API_URL:-}
+      - STREAMING_API_TOKEN=${STREAMING_API_TOKEN:-}
       # OpenTelemetry
       - OTEL_ENABLED=${OTEL_ENABLED:-false}
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}

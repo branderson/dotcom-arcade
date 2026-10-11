@@ -35,6 +35,14 @@ export interface Game {
   activeDataOnDisk?: number; // Whether the active data is downloaded (0 = no, 1 = yes)
   logoPath?: string; // Infinity edition only
   screenshotPath?: string; // Infinity edition only
+  streamable?: boolean; // Can't run in a browser but can be streamed from the server
+}
+
+export interface StreamSession {
+  /** Same-origin path the stream is served under, ending in a slash */
+  path: string;
+  width: number;
+  height: number;
 }
 
 export interface PaginatedResult<T> {
@@ -97,6 +105,8 @@ export interface GameLaunchData {
   applicationPath?: string;
   playMode?: string;
   canPlayInBrowser: boolean;
+  /** True when the game can't run in a browser but can be streamed from the server */
+  streamable?: boolean;
   /** True when the game ZIP is being downloaded in the background */
   downloading?: boolean;
 }

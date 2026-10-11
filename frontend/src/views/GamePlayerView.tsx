@@ -67,11 +67,13 @@ export function GamePlayerView() {
 
   const playerProps = useMemo(
     () => ({
+      gameId: game?.id,
       title: game?.title ?? '',
       platform: launchData?.platform ?? '',
       contentUrl: launchData?.contentUrl,
       launchCommand: launchData?.launchCommand,
       canPlayInBrowser: launchData?.canPlayInBrowser ?? false,
+      streamable: launchData?.streamable ?? false,
       logoUrl: game ? getGameLogoUrl(game.id) : undefined,
       developer: game?.developer,
       onBack: handleBack,
@@ -84,6 +86,7 @@ export function GamePlayerView() {
       launchData?.contentUrl,
       launchData?.launchCommand,
       launchData?.canPlayInBrowser,
+      launchData?.streamable,
       handleBack,
     ]
   );

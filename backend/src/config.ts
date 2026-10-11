@@ -169,6 +169,11 @@ export const config = {
 
   homeRecentHours: parseInt(process.env.HOME_RECENT_HOURS || '', 10) || 24,
 
+  // Session manager that streams games which can't run in a browser, such as
+  // Java applets (flashpoint-ultimate-server). Streaming is off unless both are set.
+  streamingApiUrl: process.env.STREAMING_API_URL || null,
+  streamingApiToken: process.env.STREAMING_API_TOKEN || null,
+
   // When enabled, copies flashpoint.sqlite to local storage for faster network access
   enableLocalDbCopy: process.env.ENABLE_LOCAL_DB_COPY === 'true',
   localDbPath: '/app/data/flashpoint.sqlite',

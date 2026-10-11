@@ -116,6 +116,21 @@ and API share one origin.
 | `FRONTEND_DIST_PATH` | `<backend>/../frontend/dist`  | Location of the built frontend (rarely needed)                 |
 | `RUFFLE_DATA_PATH`   | `/app/data/ruffle` in production | Where Ruffle is installed. Must sit on a mounted volume, or an in-app update is lost when the container is recreated |
 
+**Streaming:**
+
+Games that can't run in a browser, such as Java applets, can be streamed from a
+server-side container by a separate session manager (flashpoint-ultimate-server).
+The backend asks it which games are streamable and starts sessions for players.
+Browsers reach each stream at `/stream/<id>/` on this site, so the reverse proxy
+in front of flashpoint-web must route `/stream/` to the session manager,
+including WebSocket upgrades. Saves for streamed games are kept in each
+browser's IndexedDB.
+
+| Variable              | Default | Description                                                            |
+| --------------------- | ------- | ---------------------------------------------------------------------- |
+| `STREAMING_API_URL`   | -       | Session manager's internal API, e.g. `http://flashpoint-session-manager:8080` |
+| `STREAMING_API_TOKEN` | -       | Token the session manager expects. Streaming is off unless both are set |
+
 **OpenTelemetry:**
 
 | Variable                       | Default                    | Description                              |
