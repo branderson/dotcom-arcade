@@ -24,7 +24,8 @@ FLASHPOINT_HOST_PATH=/path/to/flashpoint docker compose up -d --build
 ```
 
 Open `https://<host>:3001` and accept the self-signed certificate. To play a
-different game, set `GAME_ID` and recreate the container. The launch log is at
+different game, set `GAME_ID`, plus `GAME_WIDTH` and `GAME_HEIGHT` to its
+window size, and recreate the container. The launch log is at
 `/config/fp-launch.log` inside the container.
 
 ## How it works

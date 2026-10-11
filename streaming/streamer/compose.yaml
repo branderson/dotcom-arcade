@@ -11,6 +11,9 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - GAME_ID=${GAME_ID:-247a4c93-c252-49c8-8bc9-fb43d5c039df}
+      # Lock the display to the game window's size; the browser scales it to fit
+      - SELKIES_MANUAL_WIDTH=${GAME_WIDTH:-472}
+      - SELKIES_MANUAL_HEIGHT=${GAME_HEIGHT:-400}
       - RESTART_APP=true
       - NO_DECOR=true
       - TITLE=Flashpoint
