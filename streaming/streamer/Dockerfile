@@ -1,3 +1,9 @@
+FROM eclipse-temurin:8-jdk AS jsobject
+COPY jsobject /src
+RUN mkdir /classes && \
+  javac -d /classes $(find /src -name '*.java') && \
+  jar cf /jsobject.jar -C /classes .
+
 FROM ghcr.io/linuxserver/baseimage-selkies:debiantrixie
 
 RUN apt-get update && \
@@ -12,3 +18,4 @@ RUN apt-get update && \
   rm -rf /var/lib/apt/lists/*
 
 COPY root/ /
+COPY --from=jsobject /jsobject.jar /opt/flashpoint/jsobject.jar

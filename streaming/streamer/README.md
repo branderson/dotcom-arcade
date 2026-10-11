@@ -33,3 +33,8 @@ different game, set `GAME_ID` and recreate the container. The launch log is at
 the game server, mounts the game's zip through the server's `mountzip` API, and
 runs the game's application with its HTTP proxy pointed at the game server.
 Selkies restarts the game when it exits (`RESTART_APP`).
+
+`appletviewer` lacks two things applets got from the browser's Java plugin, so
+the image adds them: a `netscape.javascript.JSObject` stand-in (`jsobject/`)
+whose window has a working `document.cookie`, and a policy allowing HTTP
+requests through the game server's proxy.
