@@ -3,6 +3,7 @@ import { text } from 'node:stream/consumers';
 import { timingSafeEqual } from 'node:crypto';
 import httpProxy from 'http-proxy';
 import { streamPath, type Driver } from './docker.ts';
+import type { GameCatalog } from './games.ts';
 import { parseSaveFiles } from './saves.ts';
 import { SessionError, type SessionManager } from './sessions.ts';
 
@@ -10,15 +11,23 @@ const STREAM_URL = /^\/stream\/([0-9a-f]{32})(\/.*)$/;
 const HEARTBEAT_MS = 25_000;
 const MAX_BODY_BYTES = 16 * 1024 * 1024;
 
-/** Internal API for flashpoint-web's backend: creates sessions. */
-export function createApiServer(sessions: SessionManager, token: string): http.Server {
+/** Internal API for flashpoint-web's backend: reports streamable games and creates sessions. */
+export function createApiServer(sessions: SessionManager, catalog: Pick<GameCatalog, 'streamSize'>, token: string): http.Server {
   return http.createServer((req, res) => {
     handle(res, async () => {
-      if (req.method !== 'POST' || req.url !== '/sessions') {
-        throw new SessionError(404, 'not found');
-      }
       if (!tokenMatches(req.headers.authorization, token)) {
         throw new SessionError(401, 'unauthorized');
+      }
+      const [, lookupId] = req.url?.match(/^\/games\/([0-9a-f-]{36})$/) ?? [];
+      if (req.method === 'GET' && lookupId) {
+        const size = await catalog.streamSize(lookupId);
+        if (!size) {
+          throw new SessionError(422, 'game is not streamable');
+        }
+        return sendJson(res, 200, size);
+      }
+      if (req.method !== 'POST' || req.url !== '/sessions') {
+        throw new SessionError(404, 'not found');
       }
       const { gameId } = await readJson(req);
       if (typeof gameId !== 'string') {

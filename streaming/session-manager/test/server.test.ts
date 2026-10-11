@@ -8,8 +8,9 @@ import { catalog, FakeDriver, fastTimings, sleep } from './fakes.ts';
 
 const driver = new FakeDriver();
 const sessions = new SessionManager(driver, catalog, 4, fastTimings);
-const api = createApiServer(sessions, 'secret');
+const api = createApiServer(sessions, catalog, 'secret');
 const stream = createStreamServer(sessions, driver);
+const JAVA_ID = '247a4c93-c252-49c8-8bc9-fb43d5c039df';
 let apiUrl: string;
 let streamUrl: string;
 
@@ -36,6 +37,14 @@ function createSession(gameId: string, token = 'secret') {
     body: JSON.stringify({ gameId }),
   });
 }
+
+test('the API reports whether a game is streamable', async () => {
+  const get = (gameId: string, token = 'secret') =>
+    fetch(`${apiUrl}/games/${gameId}`, { headers: { Authorization: `Bearer ${token}` } });
+  assert.equal((await get(JAVA_ID, 'wrong')).status, 401);
+  assert.deepEqual(await (await get(JAVA_ID)).json(), { width: 472, height: 354 });
+  assert.equal((await get('00000000-0000-0000-0000-000000000000')).status, 422);
+});
 
 test('the API requires the token and reports unstreamable games', async () => {
   assert.equal((await createSession('java', 'wrong')).status, 401);

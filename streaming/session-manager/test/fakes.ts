@@ -48,7 +48,7 @@ export class FakeDriver implements Driver {
 
 export const catalog = {
   async streamSize(gameId: string): Promise<Size | null> {
-    return gameId === 'java' ? { width: 472, height: 354 } : null;
+    return gameId === 'java' || gameId === '247a4c93-c252-49c8-8bc9-fb43d5c039df' ? { width: 472, height: 354 } : null;
   },
 };
 

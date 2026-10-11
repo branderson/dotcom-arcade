@@ -44,6 +44,7 @@ in secure contexts.
 
 | Endpoint | Caller | Purpose |
 |---|---|---|
+| `GET :8080/games/<id>` | flashpoint-web backend, `Authorization: Bearer <API_TOKEN>` | Returns the game's `{width, height}`, or 422 if it can't be streamed |
 | `POST :8080/sessions {gameId}` | flashpoint-web backend, `Authorization: Bearer <API_TOKEN>` | Creates a session; returns `{id, path, width, height}`, or 422 if the game can't be streamed |
 | `POST /stream/<id>/_fp/start {files}` | browser | Starts the container with the player's saves |
 | `GET /stream/<id>/_fp/saves` | browser | Server-sent events carrying `{files}` whenever saves change, then `end` |

@@ -18,14 +18,11 @@ const driver = new DockerDriver({
   uid: Number(env('PUID', '1000')),
   gid: Number(env('PGID', '1000')),
 });
-const sessions = new SessionManager(
-  driver,
-  new GameCatalog(env('FLASHPOINT_PATH', '/flashpoint')),
-  Number(env('MAX_SESSIONS', '4')),
-);
+const catalog = new GameCatalog(env('FLASHPOINT_PATH', '/flashpoint'));
+const sessions = new SessionManager(driver, catalog, Number(env('MAX_SESSIONS', '4')));
 
 await driver.removeAll();
-const api = createApiServer(sessions, env('API_TOKEN')).listen(Number(env('API_PORT', '8080')));
+const api = createApiServer(sessions, catalog, env('API_TOKEN')).listen(Number(env('API_PORT', '8080')));
 const stream = createStreamServer(sessions, driver).listen(Number(env('STREAM_PORT', '8081')));
 console.log('Session manager started');
 
