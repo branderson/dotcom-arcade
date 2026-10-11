@@ -1,0 +1,16 @@
+services:
+  flashpoint-streamer:
+    build: .
+    container_name: flashpoint-streamer
+    shm_size: 1gb
+    ports:
+      - "${STREAMER_PORT:-3001}:3001"
+    volumes:
+      - ${FLASHPOINT_HOST_PATH:?FLASHPOINT_HOST_PATH is required}:/flashpoint:ro
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - GAME_ID=${GAME_ID:-247a4c93-c252-49c8-8bc9-fb43d5c039df}
+      - RESTART_APP=true
+      - NO_DECOR=true
+      - TITLE=Flashpoint

@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Launch a Flashpoint game by ID the way the Linux launcher does: start the
+# game server, mount the game's zip, then run its application through the proxy.
+set -euo pipefail
+
+FP_PATH=${FP_PATH:-/flashpoint}
+ID=${1:?usage: fp-launch <game id>}
+DB=$FP_PATH/Data/flashpoint.sqlite
+API=http://127.0.0.1:22501/fpProxy/api
+
+[[ $ID =~ ^[0-9a-f-]{36}$ ]] || { echo "Invalid game id: $ID" >&2; exit 1; }
+
+if ! curl -s -o /dev/null "$API/listmountzip"; then
+  "$FP_PATH/Server/FlashpointGameServer" -rootPath "$FP_PATH" \
+    -useInfinityServer=false -handleLegacyRequests=true &
+  until curl -s -o /dev/null "$API/listmountzip"; do sleep 0.2; done
+fi
+
+IFS=$'\x1f' read -r app cmd date_added < <(sqlite3 -readonly -separator $'\x1f' "$DB" "
+  select coalesce(nullif(d.applicationPath, ''), g.applicationPath),
+         coalesce(nullif(d.launchCommand, ''), g.launchCommand),
+         coalesce(d.dateAdded, '')
+  from game g left join game_data d on d.id = g.activeDataId
+  where g.id = '$ID'") || true
+[[ -n ${app:-} ]] || { echo "Game not found: $ID" >&2; exit 1; }
+
+if [[ -n $date_added ]]; then
+  zip=$FP_PATH/Data/Games/$ID-$(date -u -d "$date_added" +%s%3N).zip
+  curl -sf -X POST -H 'Content-Type: application/json' \
+    -d "{\"filePath\": \"$zip\"}" "$API/mountzip" >/dev/null ||
+    { echo "Failed to mount $zip" >&2; exit 1; }
+fi
+
+echo "Launching $ID: $app $cmd"
+case ${app,,} in
+  'fpsoftware\startjava.bat' | 'fpsoftware\startjavainbrowser.bat')
+    FP_PATH=$FP_PATH exec "$FP_PATH/FPSoftware/startJava.sh" "$cmd" ;;
+  *)
+    echo "Unsupported application: $app" >&2; exit 1 ;;
+esac
