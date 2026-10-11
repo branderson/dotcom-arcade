@@ -38,6 +38,24 @@ case ${app,,} in
     # and a window holding only the applet
     export JAVA_TOOL_OPTIONS="-javaagent:/opt/flashpoint/applet-support.jar -Djava.security.policy=/opt/flashpoint/applet.policy"
     FP_PATH=$FP_PATH exec "$FP_PATH/FPSoftware/startJava.sh" "$cmd" ;;
+  'localgames\'*.exe)
+    # Windows games run under Flashpoint's bundled Wine from a writable copy.
+    # Prefs, where Director projectors save, lives in the synced saves directory.
+    exe=${app//\\//}
+    work=$HOME/game
+    [[ -d $work ]] || cp -r "$FP_PATH/$(dirname "$exe")" "$work"
+    if [[ ! -L $work/Prefs ]]; then
+      mkdir -p "$HOME/saves/Prefs"
+      # Players without a save start from the one the game ships with
+      if [[ -d $work/Prefs && -z $(ls -A "$HOME/saves/Prefs") ]]; then
+        cp -r "$work/Prefs/." "$HOME/saves/Prefs"
+      fi
+      rm -rf "$work/Prefs"
+      ln -s "$HOME/saves/Prefs" "$work/Prefs"
+    fi
+    export WINEPREFIX=$HOME/.wine WINEDEBUG=-all WINEDLLOVERRIDES='mscoree,mshtml='
+    cd "$work"
+    exec "$FP_PATH/FPSoftware/Wine/bin/wine" "$(basename "$exe")" ;;
   *)
     echo "Unsupported application: $app" >&2; exit 1 ;;
 esac
