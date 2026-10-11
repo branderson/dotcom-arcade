@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { GameService } from '../services/GameService';
 import { GameSearchCache } from '../services/GameSearchCache';
 import { gameDataService } from '../services/GameDataService';
+import { StreamingService } from '../services/StreamingService';
 import { AppError } from '../middleware/errorHandler';
 import { asyncHandler } from '../middleware/asyncHandler';
 import { sharedAccessAuth, validateSharedGameAccess } from '../middleware/auth';
@@ -235,7 +236,10 @@ router.get(
 
     res.locals.game = game;
 
-    res.json(game);
+    const streamable =
+      !isWebPlayablePlatform(game.platformName) && (await StreamingService.isStreamable(game.id));
+
+    res.json({ ...game, streamable });
   })
 );
 
@@ -311,8 +315,8 @@ router.get(
 
     const hasContent = launchCommand.trim().length > 0;
 
-    const isWebPlayablePlatform = game.platformName === 'Flash' || game.platformName === 'HTML5';
-    const canPlayInBrowser = isWebPlayablePlatform && hasContent;
+    const canPlayInBrowser = isWebPlayablePlatform(game.platformName) && hasContent;
+    const streamable = !canPlayInBrowser && (await StreamingService.isStreamable(game.id));
 
     res.locals.platform = game.platformName;
     res.locals.canPlayInBrowser = canPlayInBrowser;
@@ -327,9 +331,25 @@ router.get(
       applicationPath: game.applicationPath,
       playMode: game.playMode,
       canPlayInBrowser,
+      streamable,
       downloading,
     });
   })
 );
+
+router.post(
+  '/:id/stream-session',
+  requirePermission('games.play'),
+  validateSharedGameAccess('id'),
+  logActivity('games.stream.start', 'games'),
+  asyncHandler(async (req, res) => {
+    const id = gameIdSchema.parse(req.params.id);
+    res.status(201).json(await StreamingService.createSession(id));
+  })
+);
+
+function isWebPlayablePlatform(platformName?: string): boolean {
+  return platformName === 'Flash' || platformName === 'HTML5';
+}
 
 export default router;

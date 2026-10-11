@@ -32,6 +32,12 @@ vi.mock('../services/GameDataService', () => ({
   gameDataService: { mountGameZip },
 }));
 
+const isStreamable = vi.hoisted(() => vi.fn());
+const createSession = vi.hoisted(() => vi.fn());
+vi.mock('../services/StreamingService', () => ({
+  StreamingService: { isStreamable, createSession },
+}));
+
 import gamesRouter from './games';
 import { errorHandler } from '../middleware/errorHandler';
 import { AuthService } from '../services/AuthService';
@@ -98,5 +104,73 @@ describe('GET /api/games/:id/launch', () => {
 
     expect(response.status).toBe(200);
     expect(mountGameZip).toHaveBeenCalledOnce();
+  });
+});
+
+describe('streaming games that cannot run in a browser', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getGameById.mockResolvedValue({
+      id: GAME_ID,
+      title: 'Java Game',
+      platformName: 'Java',
+      launchCommand: 'http://example.com/index.html',
+    });
+    mountGameZip.mockResolvedValue({ mounted: true, downloading: false });
+    isStreamable.mockResolvedValue(true);
+    createSession.mockResolvedValue({ path: '/stream/abc/', width: 472, height: 354 });
+  });
+
+  it('reports a streamable game on its details and launch data', async () => {
+    signInAs(['games.read', 'games.play']);
+
+    const details = await request(createApp())
+      .get(`/api/games/${GAME_ID}`)
+      .set('Authorization', 'Bearer token');
+    const launch = await request(createApp())
+      .get(`/api/games/${GAME_ID}/launch`)
+      .set('Authorization', 'Bearer token');
+
+    expect(details.body).toMatchObject({ id: GAME_ID, streamable: true });
+    expect(launch.body).toMatchObject({ canPlayInBrowser: false, streamable: true });
+  });
+
+  it('does not ask the session manager about browser-playable games', async () => {
+    signInAs(['games.read', 'games.play']);
+    getGameById.mockResolvedValue({
+      id: GAME_ID,
+      platformName: 'Flash',
+      launchCommand: 'http://a/b.swf',
+    });
+
+    const details = await request(createApp())
+      .get(`/api/games/${GAME_ID}`)
+      .set('Authorization', 'Bearer token');
+
+    expect(details.body.streamable).toBe(false);
+    expect(isStreamable).not.toHaveBeenCalled();
+  });
+
+  it('creates a session for users with games.play', async () => {
+    signInAs(['games.read', 'games.play']);
+
+    const response = await request(createApp())
+      .post(`/api/games/${GAME_ID}/stream-session`)
+      .set('Authorization', 'Bearer token');
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({ path: '/stream/abc/', width: 472, height: 354 });
+    expect(createSession).toHaveBeenCalledWith(GAME_ID);
+  });
+
+  it('rejects session creation without games.play', async () => {
+    signInAs(['games.read']);
+
+    const response = await request(createApp())
+      .post(`/api/games/${GAME_ID}/stream-session`)
+      .set('Authorization', 'Bearer token');
+
+    expect(response.status).toBe(403);
+    expect(createSession).not.toHaveBeenCalled();
   });
 });
