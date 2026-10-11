@@ -1,8 +1,8 @@
-FROM eclipse-temurin:8-jdk AS jsobject
-COPY jsobject /src
+FROM eclipse-temurin:8-jdk AS applet-support
+COPY applet-support /src
 RUN mkdir /classes && \
   javac -d /classes $(find /src -name '*.java') && \
-  jar cf /jsobject.jar -C /classes .
+  jar cfm /applet-support.jar /src/MANIFEST.MF -C /classes .
 
 FROM ghcr.io/linuxserver/baseimage-selkies:debiantrixie
 
@@ -18,4 +18,4 @@ RUN apt-get update && \
   rm -rf /var/lib/apt/lists/*
 
 COPY root/ /
-COPY --from=jsobject /jsobject.jar /opt/flashpoint/jsobject.jar
+COPY --from=applet-support /applet-support.jar /opt/flashpoint/applet-support.jar

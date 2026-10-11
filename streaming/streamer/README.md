@@ -36,6 +36,7 @@ runs the game's application with its HTTP proxy pointed at the game server.
 Selkies restarts the game when it exits (`RESTART_APP`).
 
 `appletviewer` lacks two things applets got from the browser's Java plugin, so
-the image adds them: a `netscape.javascript.JSObject` stand-in (`jsobject/`)
-whose window has a working `document.cookie`, and a policy allowing HTTP
-requests through the game server's proxy.
+the image adds them: a `netscape.javascript.JSObject` stand-in whose window has
+a working `document.cookie`, and a policy allowing HTTP requests through the
+game server's proxy. The same jar (`applet-support/`) is loaded as a Java agent
+that removes appletviewer's menu bar and status line.

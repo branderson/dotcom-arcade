@@ -34,8 +34,9 @@ fi
 echo "Launching $ID: $app $cmd"
 case ${app,,} in
   'fpsoftware\startjava.bat' | 'fpsoftware\startjavainbrowser.bat')
-    # Applets expect the browser's JavaScript bridge and a browser-like network policy
-    export JAVA_TOOL_OPTIONS="-Xbootclasspath/a:/opt/flashpoint/jsobject.jar -Djava.security.policy=/opt/flashpoint/applet.policy"
+    # Supplies the browser's JavaScript bridge, a browser-like network policy,
+    # and a window holding only the applet
+    export JAVA_TOOL_OPTIONS="-javaagent:/opt/flashpoint/applet-support.jar -Djava.security.policy=/opt/flashpoint/applet.policy"
     FP_PATH=$FP_PATH exec "$FP_PATH/FPSoftware/startJava.sh" "$cmd" ;;
   *)
     echo "Unsupported application: $app" >&2; exit 1 ;;
