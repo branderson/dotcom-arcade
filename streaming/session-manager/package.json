@@ -1,0 +1,33 @@
+{
+  "name": "flashpoint-session-manager",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.ts",
+    "test": "node --test test/*.test.ts",
+    "check": "tsc"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "dockerode": "^5.0.1",
+    "http-proxy": "^1.18.1",
+    "tar-stream": "^3.2.2",
+    "yauzl": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/dockerode": "^4.0.2",
+    "@types/http-proxy": "^1.17.17",
+    "@types/node": "^26.6.5",
+    "@types/tar-stream": "^3.1.5",
+    "@types/ws": "^8.18.2",
+    "@types/yauzl": "^3.4.0",
+    "@types/yazl": "^3.3.1",
+    "typescript": "^7.0.2",
+    "ws": "^8.22.0",
+    "yazl": "^3.3.1"
+  }
+}
