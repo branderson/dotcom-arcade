@@ -291,7 +291,7 @@ export function GameDetailView() {
             </div>
 
             <div className="text-center space-y-2 flex-shrink-0">
-              {game.platformName === 'Flash' || game.platformName === 'HTML5' ? (
+              {game.platformName === 'Flash' || game.platformName === 'HTML5' || game.streamable ? (
                 <>
                   {isDownloading ? (
                     <button

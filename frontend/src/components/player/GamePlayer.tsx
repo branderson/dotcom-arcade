@@ -3,15 +3,20 @@ import { logger } from '@/lib/logger';
 import { AlertCircle, Maximize2, Minimize2, Loader2, ArrowLeft } from 'lucide-react';
 import { LazyImage } from '@/components/common/LazyImage';
 import { RufflePlayer } from './RufflePlayer';
+import { StreamPlayer } from './StreamPlayer';
 import { PlayerErrorBoundary } from './PlayerErrorBoundary';
 import { PlatformIcon } from '@/components/ui/platform-icon';
 
 export interface GamePlayerProps {
+  /** Required to stream games that can't run in a browser */
+  gameId?: string;
   title: string;
   platform: string;
   contentUrl?: string;
   launchCommand?: string;
   canPlayInBrowser: boolean;
+  /** Can't run in a browser but can be streamed from the server */
+  streamable?: boolean;
   allowFullscreen?: boolean;
   initialFullscreen?: boolean;
   onFullscreenChange?: (isFullscreen: boolean) => void;
@@ -34,11 +39,13 @@ export interface GamePlayerProps {
  * Note: Use the default export (wrapped with PlayerErrorBoundary) instead of this component directly.
  */
 function GamePlayerInternal({
+  gameId,
   title,
   platform,
   contentUrl,
   launchCommand,
   canPlayInBrowser,
+  streamable = false,
   allowFullscreen = true,
   initialFullscreen = false,
   onFullscreenChange,
@@ -98,7 +105,9 @@ function GamePlayerInternal({
     }
   }, [contentUrl, platform]);
 
-  if (!canPlayInBrowser) {
+  const isStreamed = !canPlayInBrowser && streamable && Boolean(gameId);
+
+  if (!canPlayInBrowser && !isStreamed) {
     const isWebPlatform = platform === 'Flash' || platform === 'HTML5';
 
     let reason: string;
@@ -255,8 +264,10 @@ function GamePlayerInternal({
               }
         }
       >
-        {/* Flash SWF - use Ruffle emulator */}
-        {flashContentType === 'swf' && contentUrl ? (
+        {/* Other platforms - stream from the server */}
+        {isStreamed && gameId ? (
+          <StreamPlayer gameId={gameId} title={title} />
+        ) : /* Flash SWF - use Ruffle emulator */ flashContentType === 'swf' && contentUrl ? (
           <RufflePlayer
             swfUrl={contentUrl}
             width="100%"

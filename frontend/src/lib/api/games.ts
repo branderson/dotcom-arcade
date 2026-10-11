@@ -5,6 +5,7 @@ import type {
   GameFilters,
   FilterOptions,
   GameLaunchData,
+  StreamSession,
 } from '@/types/game';
 
 export const gamesApi = {
@@ -84,6 +85,11 @@ export const gamesApi = {
 
   getLaunchData: async (id: string): Promise<GameLaunchData> => {
     const { data } = await apiClient.get<GameLaunchData>(`/games/${id}/launch`);
+    return data;
+  },
+
+  createStreamSession: async (id: string): Promise<StreamSession> => {
+    const { data } = await apiClient.post<StreamSession>(`/games/${id}/stream-session`);
     return data;
   },
 
