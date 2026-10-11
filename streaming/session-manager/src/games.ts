@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { buffer } from 'node:stream/consumers';
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import yauzl from 'yauzl';
 
 /** Launch applications fp-launch can stream, lowercased. */
@@ -23,11 +23,11 @@ interface LaunchRow {
 /** Looks up streamable games in a Flashpoint install. */
 export class GameCatalog {
   private readonly root: string;
-  private readonly db: Database.Database;
+  private readonly db: DatabaseSync;
 
   constructor(root: string) {
     this.root = root;
-    this.db = new Database(path.join(root, 'Data', 'flashpoint.sqlite'), { readonly: true, fileMustExist: true });
+    this.db = new DatabaseSync(path.join(root, 'Data', 'flashpoint.sqlite'), { readOnly: true });
   }
 
   /** Returns the display size for a streamable game, or null if it can't be streamed. */
@@ -40,7 +40,7 @@ export class GameCatalog {
          from game g left join game_data d on d.id = g.activeDataId
          where g.id = ?`,
       )
-      .get(gameId) as LaunchRow | undefined;
+      .get(gameId) as unknown as LaunchRow | undefined;
     if (!row || !STREAMABLE_APPS.has(row.app.toLowerCase())) {
       return null;
     }

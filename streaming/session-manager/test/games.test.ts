@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { finished } from 'node:stream/promises';
 import { test } from 'node:test';
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import yazl from 'yazl';
 import { appletSize, GameCatalog } from '../src/games.ts';
 
@@ -26,7 +26,7 @@ test('GameCatalog sizes streamable games from their GameZIP or htdocs', async ()
   zip.end();
   await finished(zip.outputStream.pipe(createWriteStream(path.join(root, 'Data', 'Games', 'zip-1690495544502.zip'))));
 
-  const db = new Database(path.join(root, 'Data', 'flashpoint.sqlite'));
+  const db = new DatabaseSync(path.join(root, 'Data', 'flashpoint.sqlite'));
   db.exec(`
     create table game (id, applicationPath, launchCommand, activeDataId);
     create table game_data (id integer primary key, applicationPath, launchCommand, dateAdded);
