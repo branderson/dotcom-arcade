@@ -131,6 +131,39 @@ browser's IndexedDB.
 | `STREAMING_API_URL`   | -       | Session manager's internal API, e.g. `http://flashpoint-session-manager:8080` |
 | `STREAMING_API_TOKEN` | -       | Token the session manager expects. Streaming is off unless both are set |
 
+**Trusted Header Login:**
+
+When a reverse proxy such as Authentik (forward auth) authenticates users in
+front of flashpoint-web, it can pass the signed-in username in a header so
+users don't log in twice. The backend believes the header only on connections
+from `TRUSTED_PROXIES`, checked against the connection's own address, not
+`X-Forwarded-For`. The proxy must always set the header, overwriting anything a
+client sends, and flashpoint-web must not be reachable from untrusted networks
+except through it.
+
+Users are matched by username, so an existing account of that name is signed
+in; otherwise an account is created (the first one as admin, as with
+registration). New accounts get a random password. While signed in through the
+proxy, users can set a password from Settings without knowing the current one,
+then log in with it when reaching flashpoint-web without the proxy, such as on a
+LAN.
+
+| Variable                  | Default | Description                                                              |
+| ------------------------- | ------- | ------------------------------------------------------------------------ |
+| `TRUSTED_HEADER_USERNAME` | -       | Header holding the username, e.g. `X-authentik-username`                 |
+| `TRUSTED_HEADER_EMAIL`    | -       | Optional header holding the email used for new accounts                  |
+| `TRUSTED_PROXIES`         | -       | Comma-separated proxy addresses or CIDR ranges allowed to set the header |
+
+With nginx and Authentik's forward auth, pass the header from the auth
+subrequest in each protected `location`:
+
+```nginx
+auth_request_set $authentik_username $upstream_http_x_authentik_username;
+auth_request_set $authentik_email $upstream_http_x_authentik_email;
+proxy_set_header X-authentik-username $authentik_username;
+proxy_set_header X-authentik-email $authentik_email;
+```
+
 **OpenTelemetry:**
 
 | Variable                       | Default                    | Description                              |
