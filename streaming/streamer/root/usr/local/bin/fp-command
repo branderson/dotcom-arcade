@@ -1,0 +1,159 @@
+#!/usr/bin/env python3
+"""Prints, NUL-separated, the working directory and command line the Flashpoint
+Linux launcher runs for an application path and launch command.
+
+Usage: fp-command APPLICATION_PATH LAUNCH_COMMAND (with FP_PATH set)
+
+Follows the launcher's rules: map the path through Data/execs.json, swap .bat
+for .sh, and run .exe files under Wine. An .exe the Linux build replaces with a
+script of the same name, like FlashpointSecurePlayer, runs that script.
+OldCPUSimulator, which hangs under Wine, is replaced by running its target
+under cpulimit at the same share of the host CPU. Exits 1 if the program
+doesn't exist.
+
+With FP_WRITABLE set, an .exe runs from a mirror of FP_PATH under it: symlinks
+to the read-only install, except the program's directory, which is copied
+since Windows programs write beside themselves. Its Prefs directory, where
+Director projectors save, is linked to ~/saves/Prefs, starting from the Prefs it
+ships with. Flashpoint Navigator's profile gets a stylesheet hiding its
+toolbars.
+"""
+import json
+import os
+import shlex
+import shutil
+import sys
+
+fp_path = os.environ['FP_PATH']
+app, cmd = sys.argv[1:3]
+
+
+def mapped(app):
+    try:
+        with open(os.path.join(fp_path, 'Data', 'execs.json')) as f:
+            execs = json.load(f)['execs']
+    except OSError:
+        return app
+    for e in execs:
+        if e['win32'].lower() == app.lower() and e.get('linux'):
+            return e['linux']
+    return app
+
+
+def resolve(relative):
+    """Finds a path under FP_PATH case-insensitively, as Windows and Wine would."""
+    path = fp_path
+    for part in relative.replace('\\', '/').split('/'):
+        if part in ('', '.'):
+            continue
+        try:
+            names = os.listdir(path)
+        except OSError:
+            return None
+        match = next((n for n in names if n == part), None) or next((n for n in names if n.lower() == part.lower()), None)
+        if match is None:
+            return None
+        path = os.path.join(path, match)
+    return path
+
+
+def split(cmd):
+    """Splits a launch command the way the launcher's escaped shell command is parsed:
+    double quotes group, paired single quotes group, and nothing else is special."""
+    lexer = shlex.shlex(cmd, posix=True)
+    lexer.whitespace_split = True
+    lexer.escape = ''
+    lexer.escapedquotes = ''
+    lexer.quotes = '"\'' if cmd.count("'") % 2 == 0 else '"'
+    return list(lexer)
+
+
+def host_mhz():
+    """The CPU clock OldCPUSimulator's target rate is measured against."""
+    try:
+        with open('/proc/cpuinfo') as f:
+            info = f.read().splitlines()
+    except OSError:
+        info = []
+    mhz = [float(line.split(':')[1]) for line in info if line.startswith('cpu MHz')]
+    if mhz:
+        return max(mhz)
+    try:
+        with open('/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq') as f:
+            return int(f.read()) / 1000
+    except (OSError, ValueError):
+        pass
+    bogomips = [float(line.split(':')[1]) for line in info if line.lower().startswith('bogomips')]
+    return bogomips[0] / 2 if bogomips else 3000
+
+
+def old_cpu_simulator(args):
+    """Translates OldCPUSimulator's '-t RATE [options] -sw SOFTWARE ARGS...'."""
+    rate, i = None, 0
+    while i < len(args) and args[i] not in ('-sw', '--software'):
+        if args[i] in ('-t', '--target-rate', '-r', '--refresh-rate'):
+            if args[i] in ('-t', '--target-rate'):
+                rate = float(args[i + 1])
+            i += 1
+        i += 1
+    if rate is None or i + 1 >= len(args):
+        sys.exit(1)
+    return rate, args[i + 1], args[i + 2:]
+
+
+relative = mapped(app).replace('\\', '/')
+args = split(cmd)
+limit = None
+if relative.lower().endswith('oldcpusimulator/oldcpusimulator.exe'):
+    rate, software, args = old_cpu_simulator(args)
+    relative = os.path.normpath(os.path.join(os.path.dirname(relative), software.replace('\\', '/')))
+    limit = max(1, round(100 * rate / host_mhz()))
+if relative.lower().endswith('.bat'):
+    relative = relative[:-4] + '.sh'
+program = resolve(relative)
+if program is None and relative.lower().endswith('.exe'):
+    program = resolve(relative[:-4] + '.sh')
+if program is None or not os.path.isfile(program):
+    sys.exit(1)
+
+def writable_copy(program, root):
+    """Mirrors FP_PATH under root, copying only the program's directory."""
+    parts = os.path.relpath(os.path.dirname(program), fp_path).split(os.sep)
+    src, dst = fp_path, root
+    for part in parts:
+        os.makedirs(dst, exist_ok=True)
+        for name in os.listdir(src):
+            if name != part and not os.path.lexists(os.path.join(dst, name)):
+                os.symlink(os.path.join(src, name), os.path.join(dst, name))
+        src, dst = os.path.join(src, part), os.path.join(dst, part)
+    if not os.path.exists(dst):
+        shutil.copytree(src, dst, symlinks=True)
+    link_saves(os.path.join(dst, 'Prefs'), os.path.expanduser('~/saves/Prefs'))
+    profile = os.path.join(dst, 'User', 'flashpointnavigator', 'Profiles', 'Default')
+    if os.path.isdir(profile):
+        os.makedirs(os.path.join(profile, 'chrome'), exist_ok=True)
+        with open(os.path.join(profile, 'chrome', 'userChrome.css'), 'w') as f:
+            f.write('#toolbar-menubar, #TabsToolbar, #nav-bar, #PersonalToolbar { visibility: collapse !important; }\n')
+    return os.path.join(dst, os.path.basename(program))
+
+
+def link_saves(path, saves):
+    """Replaces path with a link to saves, which starts from path's contents."""
+    if os.path.islink(path):
+        return
+    os.makedirs(saves, exist_ok=True)
+    if os.path.isdir(path):
+        if not os.listdir(saves):
+            shutil.copytree(path, saves, dirs_exist_ok=True)
+        shutil.rmtree(path)
+    os.symlink(saves, path)
+
+
+if program.lower().endswith('.exe') and os.environ.get('FP_WRITABLE'):
+    program = writable_copy(program, os.environ['FP_WRITABLE'])
+argv = [program, *args]
+if program.lower().endswith('.exe'):
+    argv = ['wine', 'start', '/wait', '/unix', *argv]
+if limit:
+    argv = ['cpulimit', '--include-children', '--limit', str(limit), '--', *argv]
+sys.stdout.write('\0'.join([os.path.dirname(program), *argv]) + '\0')
