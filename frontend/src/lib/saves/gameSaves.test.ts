@@ -40,6 +40,12 @@ describe('game saves in the browser', () => {
 
     localStorage.setItem('games.example/game-proxy/http:/example.com/game.swf/save', 'AMF');
     localStorage.setItem('flashpoint-theme-settings', '{}');
+    // Selkies' settings, from a streamed game's iframe on the same origin
+    const selkiesPrefix = `${location.origin}/stream/`.replace(/[^a-zA-Z0-9._-]/g, '_');
+    localStorage.setItem(
+      `${selkiesPrefix}0123456789abcdef0123456789abcdef_scaleLocallyManual`,
+      'true'
+    );
     await writeDatabase('wildlife-rescue:/scope/', 'level 3');
     await storeSaves(GAME, { 'cookies.txt': 'YQ==' });
 
@@ -57,6 +63,21 @@ describe('game saves in the browser', () => {
     expect(save.indexedDB?.map((db) => db.name)).toEqual(['wildlife-rescue:/scope/']);
     expect(saveHash(save)).not.toBeNull();
     expect(saveHash({})).toBeNull();
+  });
+
+  it('leaves out Selkies settings a save picked up before they were excluded', async () => {
+    const selkiesKey =
+      `${location.origin}/stream/`.replace(/[^a-zA-Z0-9._-]/g, '_') + 'abc_scaleLocallyManual';
+    localStorage.setItem(selkiesKey, 'true');
+    localStorage.setItem('game-key', 'save');
+    const save = await collectSave({
+      gameId: GAME,
+      keys: [selkiesKey, 'game-key'],
+      databases: [],
+      syncedHash: null,
+      savedAt: null,
+    });
+    expect(save.localStorage).toEqual({ 'game-key': 'save' });
   });
 
   it('applies a save into a fresh browser, replacing what the game kept before', async () => {

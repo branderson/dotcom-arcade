@@ -38,8 +38,20 @@ const APP_DATABASES = new Set(['flashpoint-stream-saves', STATE_DB]);
 // Unity WebGL's asset cache: large and re-downloadable, not a save
 const IGNORED_DATABASES = new Set(['UnityCache']);
 
+/**
+ * Selkies, the client in a streamed game's iframe, shares this origin and keys
+ * its settings by its page address (/stream/<session>/), sanitized like this.
+ */
+function streamClientPrefix(): string {
+  return `${window.location.origin}/stream/`.replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
 function isAppKey(key: string): boolean {
-  return key.startsWith('flashpoint-') || key === 'activityDashboardCollapsed';
+  return (
+    key.startsWith('flashpoint-') ||
+    key === 'activityDashboardCollapsed' ||
+    key.startsWith(streamClientPrefix())
+  );
 }
 
 function isGameDatabase(name: string): boolean {
@@ -98,6 +110,7 @@ export async function collectSave(state: SaveSyncState): Promise<GameSaveData> {
   if (Object.keys(stream).length > 0) data.stream = stream;
 
   const entries = state.keys
+    .filter((key) => !isAppKey(key))
     .map((key) => [key, localStorage.getItem(key)] as const)
     .filter((entry): entry is readonly [string, string] => entry[1] !== null);
   if (entries.length > 0) data.localStorage = Object.fromEntries(entries);
