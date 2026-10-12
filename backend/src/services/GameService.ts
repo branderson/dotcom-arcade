@@ -1,6 +1,7 @@
 import { DatabaseService } from './DatabaseService';
 import { logger } from '../utils/logger';
 import { config } from '../config';
+import { StreamingService } from './StreamingService';
 
 export interface GameSearchQuery {
   search?: string;
@@ -311,7 +312,8 @@ export class GameService {
   }
 
   /**
-   * SQL condition to exclude Flash games without SWF launch commands.
+   * SQL condition to exclude Flash games without SWF launch commands, unless they
+   * can be streamed.
    * Checks both game_data.launchCommand and game.launchCommand as fallback.
    *
    * Performance: ~150ms overhead per query. Acceptable for searchGames() since results
@@ -319,6 +321,10 @@ export class GameService {
    * getPlatformOptions(), use getFlashSwfGameIds() cache instead.
    */
   private getFlashSwfCondition(tableAlias: string = 'g'): string {
+    // Streaming plays Flash games whose launch command is a page, so keep them
+    if (StreamingService.isEnabled()) {
+      return '1';
+    }
     return `(
       ${tableAlias}.platformName != 'Flash'
       OR EXISTS (

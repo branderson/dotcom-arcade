@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { logger } from '@/lib/logger';
-import { AlertCircle, Maximize2, Minimize2, Loader2, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Maximize2, Minimize2, Loader2, ArrowLeft, MonitorPlay } from 'lucide-react';
 import { LazyImage } from '@/components/common/LazyImage';
 import { RufflePlayer } from './RufflePlayer';
 import { StreamPlayer } from './StreamPlayer';
@@ -57,6 +57,8 @@ function GamePlayerInternal({
   onBack,
 }: GamePlayerProps) {
   const [isFullscreen, setIsFullscreen] = useState(initialFullscreen);
+  // Streams a game Ruffle can play with the original player, for when Ruffle falls short
+  const [preferStream, setPreferStream] = useState(false);
   const [iframeError, setIframeError] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
 
@@ -105,7 +107,8 @@ function GamePlayerInternal({
     }
   }, [contentUrl, platform]);
 
-  const isStreamed = !canPlayInBrowser && streamable && Boolean(gameId);
+  const canSwitchPlayer = canPlayInBrowser && streamable && Boolean(gameId);
+  const isStreamed = streamable && Boolean(gameId) && (!canPlayInBrowser || preferStream);
 
   if (!canPlayInBrowser && !isStreamed) {
     const isWebPlatform = platform === 'Flash' || platform === 'HTML5';
@@ -230,26 +233,45 @@ function GamePlayerInternal({
             </div>
           </div>
 
-          {allowFullscreen ? (
-            <button
-              onClick={toggleFullscreen}
-              className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-lg transition-colors flex-shrink-0"
-              title={isFullscreen ? 'Exit Fullscreen (ESC)' : 'Enter Fullscreen'}
-              aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-            >
-              {isFullscreen ? (
-                <>
-                  <Minimize2 size={18} />
-                  <span className="text-sm hidden sm:inline">Exit</span>
-                </>
-              ) : (
-                <>
-                  <Maximize2 size={18} />
-                  <span className="text-sm hidden sm:inline">Fullscreen</span>
-                </>
-              )}
-            </button>
-          ) : null}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {canSwitchPlayer ? (
+              <button
+                onClick={() => setPreferStream((prev) => !prev)}
+                className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-lg transition-colors flex-shrink-0"
+                title={
+                  preferStream
+                    ? 'Play in the browser with Ruffle'
+                    : 'Play with the original Flash Player, streamed from the server'
+                }
+                aria-label={preferStream ? 'Use Ruffle' : 'Use original Flash Player'}
+              >
+                <MonitorPlay size={18} aria-hidden="true" />
+                <span className="text-sm hidden sm:inline">
+                  {preferStream ? 'Use Ruffle' : 'Original Flash Player'}
+                </span>
+              </button>
+            ) : null}
+            {allowFullscreen ? (
+              <button
+                onClick={toggleFullscreen}
+                className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-lg transition-colors flex-shrink-0"
+                title={isFullscreen ? 'Exit Fullscreen (ESC)' : 'Enter Fullscreen'}
+                aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+              >
+                {isFullscreen ? (
+                  <>
+                    <Minimize2 size={18} />
+                    <span className="text-sm hidden sm:inline">Exit</span>
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 size={18} />
+                    <span className="text-sm hidden sm:inline">Fullscreen</span>
+                  </>
+                )}
+              </button>
+            ) : null}
+          </div>
         </div>
       ) : null}
 
