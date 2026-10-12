@@ -64,8 +64,7 @@ export function AppShell({ children }: AppShellProps) {
       {enableLuckyButton ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="fixed bottom-6 right-6 z-50 animate-bounce">
-              <span className="absolute inset-0 h-12 w-12 rounded-full bg-primary animate-ping opacity-25" />
+            <div className="fixed bottom-6 right-6 z-50">
               <Button
                 variant="default"
                 size="icon"
