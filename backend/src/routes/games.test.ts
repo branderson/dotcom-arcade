@@ -34,8 +34,9 @@ vi.mock('../services/GameDataService', () => ({
 
 const isStreamable = vi.hoisted(() => vi.fn());
 const createSession = vi.hoisted(() => vi.fn());
+const isEnabled = vi.hoisted(() => vi.fn());
 vi.mock('../services/StreamingService', () => ({
-  StreamingService: { isStreamable, createSession },
+  StreamingService: { isStreamable, createSession, isEnabled },
 }));
 
 import gamesRouter from './games';
@@ -118,6 +119,7 @@ describe('streaming games that cannot run in a browser', () => {
     });
     mountGameZip.mockResolvedValue({ mounted: true, downloading: false });
     isStreamable.mockResolvedValue(true);
+    isEnabled.mockReturnValue(true);
     createSession.mockResolvedValue({ path: '/stream/abc/', width: 472, height: 354 });
   });
 
@@ -135,12 +137,12 @@ describe('streaming games that cannot run in a browser', () => {
     expect(launch.body).toMatchObject({ canPlayInBrowser: false, streamable: true });
   });
 
-  it('does not ask the session manager about browser-playable games', async () => {
+  it('does not ask the session manager about HTML5 games', async () => {
     signInAs(['games.read', 'games.play']);
     getGameById.mockResolvedValue({
       id: GAME_ID,
-      platformName: 'Flash',
-      launchCommand: 'http://a/b.swf',
+      platformName: 'HTML5',
+      launchCommand: 'http://a/index.html',
     });
 
     const details = await request(createApp())
@@ -149,6 +151,53 @@ describe('streaming games that cannot run in a browser', () => {
 
     expect(details.body.streamable).toBe(false);
     expect(isStreamable).not.toHaveBeenCalled();
+  });
+
+  it('offers streaming for Flash games Ruffle can play', async () => {
+    signInAs(['games.read', 'games.play']);
+    getGameById.mockResolvedValue({
+      id: GAME_ID,
+      platformName: 'Flash',
+      launchCommand: 'http://a/b.swf?v=1',
+    });
+
+    const launch = await request(createApp())
+      .get(`/api/games/${GAME_ID}/launch`)
+      .set('Authorization', 'Bearer token');
+
+    expect(launch.body).toMatchObject({ canPlayInBrowser: true, streamable: true });
+  });
+
+  it('streams Flash games launched from a page, which need a plugin', async () => {
+    signInAs(['games.read', 'games.play']);
+    getGameById.mockResolvedValue({
+      id: GAME_ID,
+      platformName: 'Flash',
+      launchCommand: 'http://a/game.html',
+    });
+
+    const launch = await request(createApp())
+      .get(`/api/games/${GAME_ID}/launch`)
+      .set('Authorization', 'Bearer token');
+
+    expect(launch.body).toMatchObject({ canPlayInBrowser: false, streamable: true });
+  });
+
+  it('leaves Flash pages to the browser when streaming is off', async () => {
+    signInAs(['games.read', 'games.play']);
+    isEnabled.mockReturnValue(false);
+    isStreamable.mockResolvedValue(false);
+    getGameById.mockResolvedValue({
+      id: GAME_ID,
+      platformName: 'Flash',
+      launchCommand: 'http://a/game.html',
+    });
+
+    const launch = await request(createApp())
+      .get(`/api/games/${GAME_ID}/launch`)
+      .set('Authorization', 'Bearer token');
+
+    expect(launch.body).toMatchObject({ canPlayInBrowser: true, streamable: false });
   });
 
   it('creates a session for users with games.play', async () => {

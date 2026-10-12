@@ -237,7 +237,7 @@ router.get(
     res.locals.game = game;
 
     const streamable =
-      !isWebPlayablePlatform(game.platformName) && (await StreamingService.isStreamable(game.id));
+      game.platformName !== 'HTML5' && (await StreamingService.isStreamable(game.id));
 
     res.json({ ...game, streamable });
   })
@@ -315,8 +315,16 @@ router.get(
 
     const hasContent = launchCommand.trim().length > 0;
 
-    const canPlayInBrowser = isWebPlayablePlatform(game.platformName) && hasContent;
-    const streamable = !canPlayInBrowser && (await StreamingService.isStreamable(game.id));
+    // Without a plugin, a Flash game launched from a page only plays streamed
+    const isFlashPage =
+      game.platformName === 'Flash' &&
+      !/\.swf(\?|$)/i.test(launchCommand) &&
+      StreamingService.isEnabled();
+    const canPlayInBrowser = isWebPlayablePlatform(game.platformName) && hasContent && !isFlashPage;
+    // Flash games Ruffle can play may also be streamed with the original Flash Player
+    const streamable =
+      (!canPlayInBrowser || game.platformName === 'Flash') &&
+      (await StreamingService.isStreamable(game.id));
 
     res.locals.platform = game.platformName;
     res.locals.canPlayInBrowser = canPlayInBrowser;
