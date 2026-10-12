@@ -174,6 +174,17 @@ export const config = {
   streamingApiUrl: process.env.STREAMING_API_URL || null,
   streamingApiToken: process.env.STREAMING_API_TOKEN || null,
 
+  // Sign users in from a header set by an authenticating reverse proxy, such as
+  // Authentik forward auth. Off unless the header name and the proxy addresses
+  // are both set; the header is only believed on connections from those
+  // addresses, since anyone else could send it.
+  trustedHeaderUsername: process.env.TRUSTED_HEADER_USERNAME || null,
+  trustedHeaderEmail: process.env.TRUSTED_HEADER_EMAIL || null,
+  trustedProxies: (process.env.TRUSTED_PROXIES ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean),
+
   // When enabled, copies flashpoint.sqlite to local storage for faster network access
   enableLocalDbCopy: process.env.ENABLE_LOCAL_DB_COPY === 'true',
   localDbPath: '/app/data/flashpoint.sqlite',
