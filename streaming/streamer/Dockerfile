@@ -11,9 +11,21 @@ RUN apt-get update && \
     fontconfig \
     fonts-dejavu-core \
     libasound2-plugins \
+    libfontconfig1 \
+    libfreetype6 \
+    libgl1 \
+    libpulse0 \
+    libx11-6 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxext6 \
+    libxfixes3 \
     libxi6 \
+    libxinerama1 \
+    libxrandr2 \
     libxrender1 \
     libxtst6 \
+    libxxf86vm1 \
     sqlite3 && \
   rm -rf /var/lib/apt/lists/*
 

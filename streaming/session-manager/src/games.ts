@@ -4,8 +4,11 @@ import { buffer } from 'node:stream/consumers';
 import { DatabaseSync } from 'node:sqlite';
 import yauzl from 'yauzl';
 
-/** Launch applications fp-launch can stream, lowercased. */
-const STREAMABLE_APPS = new Set(['fpsoftware\\startjava.bat', 'fpsoftware\\startjavainbrowser.bat']);
+/** Java launch applications fp-launch can stream, lowercased. */
+const JAVA_APPS = new Set(['fpsoftware\\startjava.bat', 'fpsoftware\\startjavainbrowser.bat']);
+
+/** Windows games installed under LocalGames, which fp-launch runs under Wine. */
+const LOCAL_EXE = /^localgames\\.+\.exe$/i;
 
 const DEFAULT_SIZE: Size = { width: 800, height: 600 };
 
@@ -41,7 +44,11 @@ export class GameCatalog {
          where g.id = ?`,
       )
       .get(gameId) as unknown as LaunchRow | undefined;
-    if (!row || !STREAMABLE_APPS.has(row.app.toLowerCase())) {
+    if (row && LOCAL_EXE.test(row.app)) {
+      const exe = await readFile(path.join(this.root, ...row.app.split('\\'))).catch(() => null);
+      return exe && (projectorStageSize(exe) ?? DEFAULT_SIZE);
+    }
+    if (!row || !JAVA_APPS.has(row.app.toLowerCase())) {
       return null;
     }
     const page = await this.readLaunchPage(gameId, row).catch(() => null);
@@ -70,6 +77,31 @@ export function appletSize(html: string): Size | null {
   const width = attr('width');
   const height = attr('height');
   return width > 0 && height > 0 ? { width, height } : null;
+}
+
+/**
+ * Reads the stage size of the movie in a Director projector from its config
+ * chunk: DRCF in big-endian movies, FCRD in little-endian ones. The chunk body
+ * starts with its own length, the file version, then the stage rect as
+ * big-endian top, left, bottom, right.
+ */
+export function projectorStageSize(exe: Buffer): Size | null {
+  for (const [tag, littleEndian] of [['FCRD', true], ['DRCF', false]] as const) {
+    for (let i = exe.indexOf(tag); i >= 0 && i + 8 <= exe.length; i = exe.indexOf(tag, i + 1)) {
+      const size = littleEndian ? exe.readUInt32LE(i + 4) : exe.readUInt32BE(i + 4);
+      const body = i + 8;
+      if (size < 12 || body + size > exe.length || exe.readUInt16BE(body) !== size) {
+        continue;
+      }
+      const [top, left, bottom, right] = [4, 6, 8, 10].map((offset) => exe.readInt16BE(body + offset));
+      const width = right - left;
+      const height = bottom - top;
+      if (width > 0 && height > 0 && width <= 4096 && height <= 4096) {
+        return { width, height };
+      }
+    }
+  }
+  return null;
 }
 
 /** Reads one entry from a zip, matching its name case-insensitively. */
