@@ -18,6 +18,12 @@ export const authApi = {
     return data;
   },
 
+  /** Sign in as the user an authenticating reverse proxy vouches for, if any */
+  trustedLogin: async (): Promise<LoginResponse> => {
+    const { data } = await apiClient.post<LoginResponse>('/auth/trusted-login');
+    return data;
+  },
+
   logout: async (): Promise<{ success: boolean; message: string }> => {
     const { data } = await apiClient.post('/auth/logout');
     return data;

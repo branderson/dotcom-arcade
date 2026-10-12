@@ -7,6 +7,7 @@ import { apiClient } from '../lib/api/client';
 import { LoginCredentials, RegisterData } from '../types/auth';
 import { PublicSettings } from '../types/settings';
 import { logger } from '../lib/logger';
+import { SKIP_TRUSTED_LOGIN_KEY } from '../lib/trustedLogin';
 
 /** Validate redirect path to prevent open redirects */
 function sanitizeRedirectPath(path: string | undefined): string {
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     async (credentials: LoginCredentials, redirectPath?: string) => {
       try {
         const result = await authApi.login(credentials);
+        sessionStorage.removeItem(SKIP_TRUSTED_LOGIN_KEY);
 
         // Clear user-specific cached queries, but keep public settings (not user-specific)
         queryClient.removeQueries({
@@ -114,6 +116,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 
   const logout = useCallback(async () => {
+    sessionStorage.setItem(SKIP_TRUSTED_LOGIN_KEY, '1');
     try {
       await authApi.logout();
     } catch (error) {

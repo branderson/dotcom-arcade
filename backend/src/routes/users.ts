@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/rbac';
 import { logActivity } from '../middleware/activityLogger';
 import { AppError } from '../middleware/errorHandler';
+import { getTrustedIdentity } from '../utils/trustedHeader';
 import { asyncHandler } from '../middleware/asyncHandler';
 import { z } from 'zod';
 
@@ -257,9 +258,14 @@ router.post(
     }
 
     const isAdminReset = hasAdminPermission && !isOwnPassword;
+    // A trusted proxy vouching for this user on this request proves identity as
+    // well as the current password would, and accounts it created have none
+    const trustedIdentity = getTrustedIdentity(req);
+    const isTrustedSelf =
+      isOwnPassword && trustedIdentity?.username.toLowerCase() === req.user?.username.toLowerCase();
 
     // Require current password for self-change (non-admin reset)
-    if (!isAdminReset && !data.currentPassword) {
+    if (!isAdminReset && !isTrustedSelf && !data.currentPassword) {
       throw new AppError(400, 'Current password is required');
     }
 
@@ -267,7 +273,7 @@ router.post(
       id,
       data.currentPassword || '',
       data.newPassword,
-      isAdminReset
+      isAdminReset || isTrustedSelf
     );
 
     res.json({ success: true, message: 'Password changed successfully' });

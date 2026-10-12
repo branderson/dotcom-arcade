@@ -9,8 +9,10 @@ interface AuthState {
   isAuthenticated: boolean;
   isGuest: boolean;
   isMaintenanceMode: boolean;
+  /** Signed in through a trusted proxy header rather than a password */
+  isTrustedSession: boolean;
 
-  setAuth: (user: User) => void;
+  setAuth: (user: User, isTrustedSession?: boolean) => void;
   setGuestMode: () => void;
   clearAuth: () => void;
   updateUser: (user: User) => void;
@@ -29,12 +31,14 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isGuest: false,
       isMaintenanceMode: false,
+      isTrustedSession: false,
 
-      setAuth: (user: User) => {
+      setAuth: (user: User, isTrustedSession = false) => {
         set({
           user,
           isAuthenticated: true,
           isGuest: false,
+          isTrustedSession,
         });
 
         if (user.role !== 'guest') {
@@ -66,6 +70,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           isGuest: false,
           isMaintenanceMode: false,
+          isTrustedSession: false,
         });
       },
 
@@ -141,6 +146,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         isGuest: state.isGuest,
+        isTrustedSession: state.isTrustedSession,
       }),
     }
   )

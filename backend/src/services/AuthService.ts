@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { UserDatabaseService } from './UserDatabaseService';
 import { SystemSettingsService } from './SystemSettingsService';
 import { CachedSystemSettingsService } from './CachedSystemSettingsService';
@@ -153,21 +154,7 @@ export class AuthService {
     });
 
     const userId = registerTransaction();
-
-    const appSettings = this.cachedSystemSettings.getCategory('app');
-    const defaultTheme = appSettings.defaultTheme || 'dark';
-    const defaultPrimaryColor = appSettings.defaultPrimaryColor || 'blue';
-
-    UserDatabaseService.run(
-      `INSERT INTO user_settings (user_id, setting_key, setting_value) VALUES
-       (?, 'theme_mode', ?),
-       (?, 'primary_color', ?)`,
-      [userId, defaultTheme, userId, defaultPrimaryColor]
-    );
-
-    logger.info(
-      `[AuthService] Created user ${data.username} with default theme: ${defaultTheme}, primary color: ${defaultPrimaryColor}`
-    );
+    this.createDefaultSettings(userId, data.username);
 
     const user = UserDatabaseService.get<UserTokenData & { email: string }>(
       `SELECT u.id, u.username, u.email, r.name as role_name
@@ -193,6 +180,110 @@ export class AuthService {
     };
 
     return { user: authUser, tokens };
+  }
+
+  /**
+   * Sign in a user a trusted proxy has authenticated, creating the account on
+   * first sight. Matching by username adopts an existing account of that name.
+   * A new account gets a random password; its owner can set a real one while
+   * signed in through the proxy, to log in without it.
+   */
+  async trustedLogin(
+    username: string,
+    email: string | null
+  ): Promise<{ user: AuthUser; tokens: AuthTokens; created: boolean }> {
+    if (username.length < 3 || username.length > 50) {
+      throw new AppError(400, 'Trusted username must be 3 to 50 characters');
+    }
+
+    let created = false;
+    let user = this.getTokenUserByUsername(username);
+    if (!user) {
+      const passwordHash = await hashPassword(randomBytes(32).toString('base64url'));
+      const db = UserDatabaseService.getDatabase();
+      const userId = db.transaction(() => {
+        const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username) as
+          | { id: number }
+          | undefined;
+        if (existing) {
+          return existing.id;
+        }
+        const emailTaken = email && db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+        const count = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
+        // Same rule as registration: the first account administers the instance
+        const roleId = count.count === 0 ? 1 : 2;
+        const result = db
+          .prepare(
+            'INSERT INTO users (username, email, password_hash, role_id) VALUES (?, ?, ?, ?)'
+          )
+          .run(
+            username,
+            email && !emailTaken ? email : `${username}@trusted-header.invalid`,
+            passwordHash,
+            roleId
+          );
+        created = true;
+        return result.lastInsertRowid as number;
+      })();
+      if (created) {
+        this.createDefaultSettings(userId, username);
+      }
+      user = this.getTokenUserByUsername(username);
+    }
+
+    if (!user) {
+      throw new AppError(500, 'Failed to retrieve trusted user');
+    }
+    if (!user.is_active) {
+      throw new AppError(403, 'This account is disabled');
+    }
+
+    UserDatabaseService.run('UPDATE users SET last_login_at = ? WHERE id = ?', [
+      new Date().toISOString(),
+      user.id,
+    ]);
+
+    const tokens = await this.generateTokens(user);
+    return {
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role_name,
+        permissions: this.getUserPermissions(user.id),
+      },
+      tokens,
+      created,
+    };
+  }
+
+  private getTokenUserByUsername(
+    username: string
+  ): (UserTokenData & { email: string; is_active: number }) | undefined {
+    return UserDatabaseService.get<UserTokenData & { email: string; is_active: number }>(
+      `SELECT u.id, u.username, u.email, u.is_active, r.name as role_name
+       FROM users u
+       JOIN roles r ON u.role_id = r.id
+       WHERE u.username = ?`,
+      [username]
+    );
+  }
+
+  private createDefaultSettings(userId: number, username: string): void {
+    const appSettings = this.cachedSystemSettings.getCategory('app');
+    const defaultTheme = appSettings.defaultTheme || 'dark';
+    const defaultPrimaryColor = appSettings.defaultPrimaryColor || 'blue';
+
+    UserDatabaseService.run(
+      `INSERT INTO user_settings (user_id, setting_key, setting_value) VALUES
+       (?, 'theme_mode', ?),
+       (?, 'primary_color', ?)`,
+      [userId, defaultTheme, userId, defaultPrimaryColor]
+    );
+
+    logger.info(
+      `[AuthService] Created user ${username} with default theme: ${defaultTheme}, primary color: ${defaultPrimaryColor}`
+    );
   }
 
   async logout(refreshToken: string): Promise<void> {

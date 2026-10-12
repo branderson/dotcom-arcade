@@ -10,6 +10,7 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormDescription,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
@@ -45,8 +46,10 @@ type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 
 interface ChangePasswordDialogProps {
   isOpen: boolean;
-  user: UserDetails;
+  user: Pick<UserDetails, 'id' | 'username'>;
   isAdminReset?: boolean;
+  /** Signed in through a trusted proxy, which vouches for the user in place of the current password */
+  currentPasswordOptional?: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -55,6 +58,7 @@ export function ChangePasswordDialog({
   isOpen,
   user,
   isAdminReset,
+  currentPasswordOptional,
   onClose,
   onSuccess,
 }: ChangePasswordDialogProps) {
@@ -70,7 +74,7 @@ export function ChangePasswordDialog({
   });
 
   const onSubmit = async (values: ChangePasswordFormValues) => {
-    if (!isAdminReset && !values.currentPassword) {
+    if (!isAdminReset && !currentPasswordOptional && !values.currentPassword) {
       form.setError('currentPassword', { message: 'Current password is required' });
       return;
     }
@@ -78,7 +82,8 @@ export function ChangePasswordDialog({
       await changePasswordMutation.mutateAsync({
         id: user.id,
         passwordData: {
-          currentPassword: isAdminReset ? undefined : values.currentPassword,
+          currentPassword:
+            isAdminReset || !values.currentPassword ? undefined : values.currentPassword,
           newPassword: values.newPassword,
         },
       });
@@ -113,10 +118,17 @@ export function ChangePasswordDialog({
                   name="currentPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Current Password</FormLabel>
+                      <FormLabel>
+                        Current Password{currentPasswordOptional ? ' (optional)' : ''}
+                      </FormLabel>
                       <FormControl>
                         <Input type="password" placeholder="******************" {...field} />
                       </FormControl>
+                      {currentPasswordOptional ? (
+                        <FormDescription>
+                          Not needed while you&apos;re signed in through single sign-on.
+                        </FormDescription>
+                      ) : null}
                       <FormMessage />
                     </FormItem>
                   )}

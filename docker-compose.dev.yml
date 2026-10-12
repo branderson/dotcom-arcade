@@ -67,6 +67,10 @@ services:
       # Streamed play for games that can't run in a browser (off unless both are set)
       - STREAMING_API_URL=${STREAMING_API_URL:-}
       - STREAMING_API_TOKEN=${STREAMING_API_TOKEN:-}
+      # Sign in users named by an authenticating reverse proxy (off unless both are set)
+      - TRUSTED_HEADER_USERNAME=${TRUSTED_HEADER_USERNAME:-}
+      - TRUSTED_HEADER_EMAIL=${TRUSTED_HEADER_EMAIL:-}
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES:-}
       # OpenTelemetry
       - OTEL_ENABLED=${OTEL_ENABLED:-false}
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Settings } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AccountPasswordCard } from '@/components/settings/AccountPasswordCard';
 import { useAuthStore } from '@/store/auth';
 import { useQuery } from '@tanstack/react-query';
 import { ruffleApi } from '@/lib/api';
@@ -61,6 +62,8 @@ export function SettingsView() {
         <Settings size={32} className="text-primary" />
         <h1 className="text-3xl font-bold">Settings</h1>
       </div>
+
+      <AccountPasswordCard />
 
       {isAdmin ? (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

@@ -8,6 +8,7 @@ import { asyncHandler } from '../middleware/asyncHandler';
 import { softAuth } from '../middleware/auth';
 import { logActivity } from '../middleware/activityLogger';
 import { logger } from '../utils/logger';
+import { getTrustedIdentity, isTrustedHeaderEnabled } from '../utils/trustedHeader';
 import {
   setRefreshTokenCookie,
   clearRefreshTokenCookie,
@@ -242,6 +243,47 @@ router.post(
 
       throw error;
     }
+  })
+);
+
+// Signs in the user an authenticating reverse proxy vouches for (TRUSTED_HEADER_USERNAME)
+router.post(
+  '/trusted-login',
+  refreshLimiter,
+  asyncHandler(async (req, res) => {
+    if (!isTrustedHeaderEnabled()) {
+      throw new AppError(404, 'Trusted header login is not enabled');
+    }
+    const identity = getTrustedIdentity(req);
+    if (!identity) {
+      throw new AppError(403, 'No trusted identity on this request');
+    }
+
+    const ipAddress = req.ip ?? '';
+    const result = await authService.trustedLogin(identity.username, identity.email);
+
+    await activityService.log({
+      userId: result.user.id,
+      username: result.user.username,
+      action: 'login',
+      resource: 'auth',
+      details: { method: 'trusted-header', accountCreated: result.created },
+      ipAddress,
+      userAgent: req.headers['user-agent'],
+    });
+    logger.info(
+      `[Auth] Trusted header login for user: ${result.user.username}${result.created ? ' (account created)' : ''}`
+    );
+
+    setRefreshTokenCookie(req, res, result.tokens.refreshToken);
+    setAccessTokenCookie(req, res, result.tokens.accessToken);
+
+    res.json({
+      user: result.user,
+      tokens: {
+        expiresIn: result.tokens.expiresIn,
+      },
+    });
   })
 );
 
