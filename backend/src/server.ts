@@ -209,7 +209,11 @@ async function startServer() {
     })
   );
 
-  app.use(express.json({ limit: '1mb' }));
+  // Game saves parse their own, larger bodies (routes/game-saves.ts)
+  const jsonParser = express.json({ limit: '1mb' });
+  app.use((req, res, next) =>
+    req.path.startsWith('/api/game-saves') ? next() : jsonParser(req, res, next)
+  );
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
   app.use(cookieParser());

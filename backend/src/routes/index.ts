@@ -22,6 +22,7 @@ import userPlaylistsRouter from './user-playlists';
 import sharedPlaylistsRouter from './shared-playlists';
 import favoritesRouter from './favorites';
 import ratingsRouter from './ratings';
+import gameSavesRouter from './game-saves';
 import ruffleRouter from './ruffle';
 import githubRouter from './github';
 import domainsRouter from './domains';
@@ -49,6 +50,7 @@ export function setupRoutes(app: Express): void {
   app.use('/api/playlists/shared', sharedPlaylistsRouter);
   app.use('/api/favorites', favoritesRouter);
   app.use('/api/ratings', ratingsRouter);
+  app.use('/api/game-saves', gameSavesRouter);
   app.use('/api/games', gamesRouter);
   app.use('/api/games', downloadsRouter);
   app.use('/api/platforms', platformsRouter);
