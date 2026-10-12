@@ -43,8 +43,16 @@ function fromTrustedProxy(req: Request): boolean {
 
 function header(req: Request, name: string | null): string | null {
   if (!name) return null;
-  const value = req.headers[name.toLowerCase()];
-  return typeof value === 'string' && value.trim() ? value.trim() : null;
+  // Read each occurrence: Node joins repeats into one value with ", ", which a
+  // proxy setting the header twice would turn into a different username
+  const values = (req.headersDistinct[name.toLowerCase()] ?? [])
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (values.some((value) => value !== values[0])) {
+    logger.warn(`[TrustedHeader] Ignoring ${name}: the proxy sent conflicting values`);
+    return null;
+  }
+  return values[0] ?? null;
 }
 
 /**

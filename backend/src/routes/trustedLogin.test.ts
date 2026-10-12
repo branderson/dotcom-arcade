@@ -86,6 +86,17 @@ describe('trusted header login', () => {
     });
   });
 
+  it('signs in once when a misconfigured proxy repeats the header', async () => {
+    // superagent sends an array as repeated header lines; its types only allow that for Cookie
+    const twice = (value: string) => [value, value] as unknown as string;
+    const res = await request(app)
+      .post('/api/auth/trusted-login')
+      .set('X-authentik-username', twice('brad'))
+      .set('X-authentik-email', twice('brad@example.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.user).toMatchObject({ username: 'brad', email: 'brad@example.com' });
+  });
+
   it('signs an existing user back in, matching the username case-insensitively', async () => {
     const again = await trustedLogin(app, 'BRAD', 'someone-else@example.com');
     expect(again.status).toBe(200);

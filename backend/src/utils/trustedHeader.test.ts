@@ -12,8 +12,11 @@ const config = vi.hoisted(() => ({
 }));
 vi.mock('../config', () => ({ config }));
 
-function request(remoteAddress: string, headers: Record<string, string> = {}): Request {
-  return { socket: { remoteAddress }, headers } as unknown as Request;
+function request(remoteAddress: string, headers: Record<string, string | string[]> = {}): Request {
+  const headersDistinct = Object.fromEntries(
+    Object.entries(headers).map(([name, value]) => [name, Array.isArray(value) ? value : [value]])
+  );
+  return { socket: { remoteAddress }, headersDistinct } as unknown as Request;
 }
 
 describe('trusted header identity', () => {
@@ -49,6 +52,22 @@ describe('trusted header identity', () => {
       username: 'brad',
       email: null,
     });
+  });
+
+  it('accepts a header repeated with the same value, and refuses conflicting repeats', async () => {
+    const { getTrustedIdentity } = await load();
+
+    expect(
+      getTrustedIdentity(
+        request('192.0.2.10', {
+          'x-authentik-username': ['brad', 'brad'],
+          'x-authentik-email': ['brad@example.com', 'brad@example.com'],
+        })
+      )
+    ).toEqual({ username: 'brad', email: 'brad@example.com' });
+    expect(
+      getTrustedIdentity(request('192.0.2.10', { 'x-authentik-username': ['brad', 'mallory'] }))
+    ).toBeNull();
   });
 
   it('is off without a header name', async () => {

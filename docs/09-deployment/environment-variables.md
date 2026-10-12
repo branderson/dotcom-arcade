@@ -154,8 +154,9 @@ LAN.
 | `TRUSTED_HEADER_EMAIL`    | -       | Optional header holding the email used for new accounts                  |
 | `TRUSTED_PROXIES`         | -       | Comma-separated proxy addresses or CIDR ranges allowed to set the header |
 
-With nginx and Authentik's forward auth, pass the header from the auth
-subrequest in each protected `location`:
+With nginx and Authentik's forward auth, each protected `location` needs these
+lines once. Authentik's generated nginx snippet already includes them; adding
+them again sends each header twice:
 
 ```nginx
 auth_request_set $authentik_username $upstream_http_x_authentik_username;
