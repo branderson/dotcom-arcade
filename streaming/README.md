@@ -53,7 +53,7 @@ in secure contexts.
 A game is streamable when its platform is in `STREAM_PLATFORMS` (default
 `Java,Shockwave,Flash`) and the streamer can resolve its launcher. The display
 is sized from the content it launches: a Director movie's or projector's stage,
-a SWF's stage scaled up to fit 1280x960, a page's applet or largest embed, with
+a SWF's stage, a page's applet or largest embed, with
 fallbacks of 800x600, or 1024x768 for pages.
 
 Saves are `{relative path: base64 contents}` for the files under the

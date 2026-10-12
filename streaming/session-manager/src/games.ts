@@ -11,9 +11,6 @@ const JAVA_APPS = new Set(['fpsoftware\\startjava.bat', 'fpsoftware\\startjavain
 const DEFAULT_SIZE: Size = { width: 800, height: 600 };
 const BROWSER_SIZE: Size = { width: 1024, height: 768 };
 
-/** Flash is vector art, so it renders sharper at a larger display than its stage. */
-const FLASH_MAX: Size = { width: 1280, height: 960 };
-
 /** A page's default body margin around embedded content. */
 const PAGE_MARGIN = 8;
 
@@ -79,7 +76,8 @@ export class GameCatalog {
       return even((content && directorStageSize(content)) ?? DEFAULT_SIZE);
     }
     if (extension === '.swf') {
-      return even(scaleToFit((content && swfStageSize(content)) ?? DEFAULT_SIZE, FLASH_MAX));
+      // The exact stage: in full screen, games that set noScale keep their native size
+      return even((content && swfStageSize(content)) ?? DEFAULT_SIZE);
     }
     const embed = content && embedSize(content.toString('latin1'));
     return even(embed ? { width: embed.width + 2 * PAGE_MARGIN, height: embed.height + 2 * PAGE_MARGIN } : BROWSER_SIZE);
@@ -156,11 +154,6 @@ async function resolveCaseInsensitive(root: string, relative: string): Promise<s
 /** H.264 needs even dimensions. */
 function even({ width, height }: Size): Size {
   return { width: width + (width % 2), height: height + (height % 2) };
-}
-
-function scaleToFit(size: Size, max: Size): Size {
-  const scale = Math.min(max.width / size.width, max.height / size.height);
-  return scale > 1 ? { width: Math.round(size.width * scale), height: Math.round(size.height * scale) } : size;
 }
 
 /** Reads the stage size from a SWF header: a rect of twips after the 8-byte header. */

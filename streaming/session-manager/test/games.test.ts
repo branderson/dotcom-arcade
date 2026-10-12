@@ -181,7 +181,7 @@ test('GameCatalog streams allowed platforms whose launcher resolves, sized from 
     oldcpu: { width: 500, height: 426 },
     secure: { width: 640, height: 480 },
     navigator: { width: 528, height: 400 },
-    flash: { width: 1280, height: 960 },
+    flash: { width: 500, height: 376 },
     unity: null,
     'no-program': null,
     exe: { width: 800, height: 600 },
