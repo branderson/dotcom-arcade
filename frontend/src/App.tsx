@@ -21,6 +21,7 @@ import { useAuthStore } from './store/auth';
 import { useServerStatusStore } from './store/serverStatus';
 import { authSettingsApi, authApi } from './lib/api';
 import { usePublicSettings } from './hooks/usePublicSettings';
+import { useTrustedLogin } from './hooks/useTrustedLogin';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -99,6 +100,8 @@ function App() {
   const location = useLocation();
   const { data: publicSettings } = usePublicSettings();
 
+  const trustedLoginChecked = useTrustedLogin();
+
   // Check if system needs initial setup (no users exist)
   const { data: setupStatus } = useQuery({
     queryKey: ['setupStatus'],
@@ -137,6 +140,8 @@ function App() {
       location.pathname === '/register' ||
       location.pathname === '/setup';
 
+    if (!trustedLoginChecked) return;
+
     if (isAuthPage && isGuest && !isAuthenticated) {
       // Clear guest mode when navigating to auth pages
       clearAuth();
@@ -144,7 +149,7 @@ function App() {
       // Initialize guest mode for non-auth pages
       setGuestMode();
     }
-  }, [isAuthenticated, isGuest, location.pathname, setGuestMode, clearAuth]);
+  }, [isAuthenticated, isGuest, location.pathname, setGuestMode, clearAuth, trustedLoginChecked]);
 
   // Update browser title from site name in public settings
   useEffect(() => {
@@ -188,6 +193,10 @@ function App() {
         <ServerStartingScreen />
       </ErrorBoundary>
     );
+  }
+
+  if (!trustedLoginChecked) {
+    return <RouteLoadingFallback />;
   }
 
   return (
