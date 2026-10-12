@@ -1,9 +1,20 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { Fragment, useState, useEffect, useRef, useMemo } from 'react';
 import { logger } from '@/lib/logger';
-import { AlertCircle, Maximize2, Minimize2, Loader2, ArrowLeft, MonitorPlay } from 'lucide-react';
+import {
+  AlertCircle,
+  Maximize2,
+  Minimize2,
+  Loader2,
+  ArrowLeft,
+  MonitorPlay,
+  History,
+} from 'lucide-react';
 import { LazyImage } from '@/components/common/LazyImage';
 import { RufflePlayer } from './RufflePlayer';
 import { StreamPlayer } from './StreamPlayer';
+import { SavesDialog } from './SavesDialog';
+import { useGameSaveSync } from '@/hooks/useGameSaveSync';
+import { useAuthStore } from '@/store/auth';
 import { PlayerErrorBoundary } from './PlayerErrorBoundary';
 import { PlatformIcon } from '@/components/ui/platform-icon';
 
@@ -59,6 +70,10 @@ function GamePlayerInternal({
   const [isFullscreen, setIsFullscreen] = useState(initialFullscreen);
   // Streams a game Ruffle can play with the original player, for when Ruffle falls short
   const [preferStream, setPreferStream] = useState(false);
+  // Signed-in players' saves are kept on their account
+  const isSignedIn = useAuthStore((state) => state.isAuthenticated);
+  const saveSync = useGameSaveSync(gameId, isSignedIn && (canPlayInBrowser || streamable));
+  const [savesOpen, setSavesOpen] = useState(false);
   const [iframeError, setIframeError] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
 
@@ -234,6 +249,17 @@ function GamePlayerInternal({
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
+            {isSignedIn && gameId ? (
+              <button
+                onClick={() => setSavesOpen(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/80 rounded-lg transition-colors flex-shrink-0"
+                title="Saves kept on your account"
+                aria-label="Saves"
+              >
+                <History size={18} aria-hidden="true" />
+                <span className="text-sm hidden sm:inline">Saves</span>
+              </button>
+            ) : null}
             {canSwitchPlayer ? (
               <button
                 onClick={() => setPreferStream((prev) => !prev)}
@@ -286,106 +312,123 @@ function GamePlayerInternal({
               }
         }
       >
-        {/* Other platforms - stream from the server */}
-        {isStreamed && gameId ? (
-          <StreamPlayer gameId={gameId} title={title} />
-        ) : /* Flash SWF - use Ruffle emulator */ flashContentType === 'swf' && contentUrl ? (
-          <RufflePlayer
-            swfUrl={contentUrl}
-            width="100%"
-            height="100%"
-            className="w-full h-full"
-            scaleMode={defaultScaleMode}
-            onLoadError={(error) => {
-              logger.error('Ruffle load error:', error);
-            }}
-            onLoadSuccess={() => {
-              logger.debug('Ruffle loaded successfully');
-            }}
-          />
-        ) : /* Flash HTML wrapper - use iframe */ flashContentType === 'html-wrapper' &&
-          contentUrl ? (
-          <>
-            <iframe
-              src={contentUrl}
-              className="w-full h-full border-0"
-              title={title}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock allow-top-navigation-by-user-activation"
-              allow="fullscreen; autoplay; clipboard-read; clipboard-write"
-              onLoad={() => {
-                logger.debug('[Flash HTML Wrapper] Loaded successfully:', contentUrl);
-                setIframeError(null);
-              }}
-              onError={(e) => {
-                logger.error('[Flash HTML Wrapper] Load error:', e);
-                setIframeError('Failed to load Flash game');
-              }}
-            />
-            {iframeError ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/90 z-10">
-                <div className="text-center max-w-md p-6">
-                  <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold mb-2">Failed to Load Game</h3>
-                  <p className="mb-4">{iframeError}</p>
-                  <div className="bg-card rounded p-3 mb-4 border border-border">
-                    <p className="text-sm text-muted-foreground text-left">
-                      <strong>URL:</strong> {contentUrl}
-                    </p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Check the browser console for more details.
-                  </p>
-                </div>
-              </div>
-            ) : null}
-          </>
-        ) : /* HTML5 game - use iframe */ platform === 'HTML5' && contentUrl ? (
-          <>
-            <iframe
-              src={contentUrl}
-              className="w-full h-full border-0"
-              title={title}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock allow-top-navigation-by-user-activation"
-              allow="fullscreen; autoplay; clipboard-read; clipboard-write"
-              onLoad={() => {
-                logger.debug('[HTML5 Game] Loaded successfully:', contentUrl);
-                setIframeError(null);
-              }}
-              onError={(e) => {
-                logger.error('[HTML5 Game] Load error:', e);
-                setIframeError('Failed to load HTML5 game');
-              }}
-            />
-            {iframeError ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/90 z-10">
-                <div className="text-center max-w-md p-6">
-                  <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold mb-2">Failed to Load Game</h3>
-                  <p className="mb-4">{iframeError}</p>
-                  <div className="bg-card rounded p-3 mb-4 border border-border">
-                    <p className="text-sm text-muted-foreground text-left">
-                      <strong>URL:</strong> {contentUrl}
-                    </p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Check the browser console for more details.
-                  </p>
-                </div>
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <AlertCircle size={48} className="text-yellow-500 mx-auto mb-4" />
-              <p>No content URL available for this game</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Launch command: {launchCommand || 'N/A'}
-              </p>
-            </div>
+        {!saveSync.ready ? (
+          <div className="flex items-center justify-center h-full gap-3 text-muted-foreground">
+            <Loader2 className="animate-spin" aria-hidden="true" />
+            <span>Loading your save...</span>
           </div>
+        ) : (
+          <Fragment key={saveSync.epoch}>
+            {/* Other platforms - stream from the server */}
+            {isStreamed && gameId ? (
+              <StreamPlayer gameId={gameId} title={title} />
+            ) : /* Flash SWF - use Ruffle emulator */ flashContentType === 'swf' && contentUrl ? (
+              <RufflePlayer
+                swfUrl={contentUrl}
+                width="100%"
+                height="100%"
+                className="w-full h-full"
+                scaleMode={defaultScaleMode}
+                onLoadError={(error) => {
+                  logger.error('Ruffle load error:', error);
+                }}
+                onLoadSuccess={() => {
+                  logger.debug('Ruffle loaded successfully');
+                }}
+              />
+            ) : /* Flash HTML wrapper - use iframe */ flashContentType === 'html-wrapper' &&
+              contentUrl ? (
+              <>
+                <iframe
+                  src={contentUrl}
+                  className="w-full h-full border-0"
+                  title={title}
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock allow-top-navigation-by-user-activation"
+                  allow="fullscreen; autoplay; clipboard-read; clipboard-write"
+                  onLoad={() => {
+                    logger.debug('[Flash HTML Wrapper] Loaded successfully:', contentUrl);
+                    setIframeError(null);
+                  }}
+                  onError={(e) => {
+                    logger.error('[Flash HTML Wrapper] Load error:', e);
+                    setIframeError('Failed to load Flash game');
+                  }}
+                />
+                {iframeError ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/90 z-10">
+                    <div className="text-center max-w-md p-6">
+                      <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
+                      <h3 className="text-xl font-bold mb-2">Failed to Load Game</h3>
+                      <p className="mb-4">{iframeError}</p>
+                      <div className="bg-card rounded p-3 mb-4 border border-border">
+                        <p className="text-sm text-muted-foreground text-left">
+                          <strong>URL:</strong> {contentUrl}
+                        </p>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Check the browser console for more details.
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : /* HTML5 game - use iframe */ platform === 'HTML5' && contentUrl ? (
+              <>
+                <iframe
+                  src={contentUrl}
+                  className="w-full h-full border-0"
+                  title={title}
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock allow-top-navigation-by-user-activation"
+                  allow="fullscreen; autoplay; clipboard-read; clipboard-write"
+                  onLoad={() => {
+                    logger.debug('[HTML5 Game] Loaded successfully:', contentUrl);
+                    setIframeError(null);
+                  }}
+                  onError={(e) => {
+                    logger.error('[HTML5 Game] Load error:', e);
+                    setIframeError('Failed to load HTML5 game');
+                  }}
+                />
+                {iframeError ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/90 z-10">
+                    <div className="text-center max-w-md p-6">
+                      <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
+                      <h3 className="text-xl font-bold mb-2">Failed to Load Game</h3>
+                      <p className="mb-4">{iframeError}</p>
+                      <div className="bg-card rounded p-3 mb-4 border border-border">
+                        <p className="text-sm text-muted-foreground text-left">
+                          <strong>URL:</strong> {contentUrl}
+                        </p>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Check the browser console for more details.
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <AlertCircle size={48} className="text-yellow-500 mx-auto mb-4" />
+                  <p>No content URL available for this game</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Launch command: {launchCommand || 'N/A'}
+                  </p>
+                </div>
+              </div>
+            )}
+          </Fragment>
         )}
       </div>
+      {isSignedIn && gameId ? (
+        <SavesDialog
+          gameId={gameId}
+          isOpen={savesOpen}
+          onClose={() => setSavesOpen(false)}
+          onRestore={saveSync.restore}
+        />
+      ) : null}
     </div>
   );
 }

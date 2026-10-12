@@ -5,6 +5,7 @@ export { apiClient } from './client';
 export { authApi } from './auth';
 
 export { gamesApi } from './games';
+export { gameSavesApi } from './gameSaves';
 
 export { playlistsApi, communityPlaylistsApi } from './playlists';
 export type { CommunityPlaylistsResponse } from './playlists';
