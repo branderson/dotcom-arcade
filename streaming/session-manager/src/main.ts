@@ -18,7 +18,10 @@ const driver = new DockerDriver({
   uid: Number(env('PUID', '1000')),
   gid: Number(env('PGID', '1000')),
 });
-const catalog = new GameCatalog(env('FLASHPOINT_PATH', '/flashpoint'));
+const catalog = new GameCatalog(
+  env('FLASHPOINT_PATH', '/flashpoint'),
+  env('STREAM_PLATFORMS', 'Java,Shockwave,Flash').split(','),
+);
 const sessions = new SessionManager(driver, catalog, Number(env('MAX_SESSIONS', '4')));
 
 await driver.removeAll();
