@@ -26,6 +26,8 @@ const booleanSchema = z.preprocess((val) => {
 
 const gameIdSchema = z.string().uuid('Invalid game ID format');
 
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD');
+
 // Schema for POST search requests (arrays in JSON body) - supports complex filter combinations
 const searchBodySchema = z.object({
   search: z.string().optional(),
@@ -42,9 +44,12 @@ const searchBodySchema = z.object({
   yearTo: z.number().int().min(1970).max(2100).optional(),
   dateAddedSince: z.string().datetime().optional(),
   dateModifiedSince: z.string().datetime().optional(),
+  releasedFrom: isoDate.optional(),
+  releasedTo: isoDate.optional(),
   sortBy: z
-    .enum(['title', 'releaseDate', 'dateAdded', 'dateModified', 'developer'])
+    .enum(['title', 'releaseDate', 'dateAdded', 'dateModified', 'developer', 'random'])
     .default('title'),
+  seed: z.number().int().min(0).max(2147483647).optional(),
   sortOrder: z.enum(['asc', 'desc']).default('asc'),
   page: z.number().int().min(1).default(1),
   limit: z.number().int().min(1).max(100).default(50),
@@ -100,7 +105,10 @@ router.post(
       yearTo: body.yearTo,
       dateAddedSince: body.dateAddedSince,
       dateModifiedSince: body.dateModifiedSince,
+      releasedFrom: body.releasedFrom,
+      releasedTo: body.releasedTo,
       sortBy: body.sortBy,
+      seed: body.seed,
       sortOrder: body.sortOrder,
       page: body.page,
       limit: body.limit,
@@ -207,7 +215,8 @@ router.get(
       }
     }
 
-    const game = await gameService.getRandomGame(library, platforms);
+    const showExtreme = booleanSchema.optional().parse(req.query.showExtreme) ?? false;
+    const game = await gameService.getRandomGame(library, platforms, showExtreme);
 
     if (!game) {
       throw new AppError(404, 'No games found');
@@ -249,7 +258,8 @@ router.get(
   asyncHandler(async (req, res) => {
     const id = gameIdSchema.parse(req.params.id);
     const limit = Math.max(1, Math.min(parseInt(req.query.limit as string, 10) || 10, 50));
-    const relatedGames = await gameService.getRelatedGames(id, limit);
+    const showExtreme = booleanSchema.optional().parse(req.query.showExtreme) ?? false;
+    const relatedGames = await gameService.getRelatedGames(id, limit, showExtreme);
 
     res.json(relatedGames);
   })

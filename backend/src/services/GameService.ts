@@ -1,6 +1,7 @@
 import { DatabaseService } from './DatabaseService';
 import { logger } from '../utils/logger';
 import { config } from '../config';
+import { MatureContentService } from './MatureContentService';
 import { StreamingService } from './StreamingService';
 
 export interface GameSearchQuery {
@@ -19,7 +20,12 @@ export interface GameSearchQuery {
   yearTo?: number;
   dateAddedSince?: string; // ISO 8601 timestamp - filter games added after this date
   dateModifiedSince?: string; // ISO 8601 timestamp - filter games modified after this date
+  /** Release date range, YYYY-MM-DD inclusive; only games dated to the day match */
+  releasedFrom?: string;
+  releasedTo?: string;
   sortBy: string;
+  /** Shuffle seed for sortBy 'random' */
+  seed?: number;
   sortOrder: 'asc' | 'desc';
   page: number;
   limit: number;
@@ -357,7 +363,7 @@ export class GameService {
       // library and orderTitle needed for filtering/sorting
       return `
         g.id, g.title, g.developer, g.platformName,
-        g.tagsStr, g.library, g.orderTitle
+        g.tagsStr, g.library, g.orderTitle, g.releaseDate
       `;
     }
 
@@ -509,7 +515,18 @@ export class GameService {
       }
 
       if (!query.showExtreme) {
-        sql += ` AND (g.extreme = 0 OR g.extreme IS NULL)`;
+        sql += ` AND ${MatureContentService.excludeCondition('g', params)}`;
+      }
+
+      // Release date range, for "what came out that week"; only dates known to the day
+      if (query.releasedFrom) {
+        sql += ` AND length(g.releaseDate) >= 10 AND g.releaseDate >= ?`;
+        params.push(query.releasedFrom);
+      }
+
+      if (query.releasedTo) {
+        sql += ` AND length(g.releaseDate) >= 10 AND g.releaseDate <= ?`;
+        params.push(`${query.releasedTo}~`);
       }
 
       // Exclude Flash games without SWF launch commands (not web-playable)
@@ -536,9 +553,17 @@ export class GameService {
       }
 
       // Apply sorting
-      const sortColumn = this.getSortColumn(query.sortBy);
-      const safeOrder = query.sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
-      sql += ` ORDER BY ${sortColumn} ${safeOrder}`;
+      if (query.sortBy === 'random') {
+        // A seeded shuffle, so paging through it neither repeats nor skips games. Each
+        // multiplier permutes rowids differently modulo the prime; an added seed wouldn't.
+        const multiplier = 1 + ((((query.seed ?? 0) + 1) * 2654435761) % 4294967290);
+        sql += ` ORDER BY (g.rowid * ?) % 4294967291, g.rowid`;
+        params.push(multiplier);
+      } else {
+        const sortColumn = this.getSortColumn(query.sortBy);
+        const safeOrder = query.sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+        sql += ` ORDER BY ${sortColumn} ${safeOrder}`;
+      }
 
       // Apply pagination
       sql += ` LIMIT ? OFFSET ?`;
@@ -748,7 +773,7 @@ export class GameService {
     }
   }
 
-  async getRelatedGames(gameId: string, limit: number = 10): Promise<Game[]> {
+  async getRelatedGames(gameId: string, limit: number = 10, showExtreme = false): Promise<Game[]> {
     try {
       // First get the source game
       const sourceGame = await this.getGameById(gameId);
@@ -757,6 +782,7 @@ export class GameService {
       }
 
       // Find games with same developer or platform
+      const matureParams: unknown[] = [];
       const sql = `
         SELECT
           g.id, g.title, g.alternateTitles, g.developer, g.publisher,
@@ -768,6 +794,7 @@ export class GameService {
             g.developer = ? OR
             g.platformName = ?
           )
+          ${showExtreme ? '' : 'AND ' + MatureContentService.excludeCondition('g', matureParams)}
         ORDER BY
           CASE
             WHEN g.developer = ? THEN 1
@@ -782,6 +809,7 @@ export class GameService {
         gameId,
         sourceGame.developer,
         sourceGame.platformName,
+        ...matureParams,
         sourceGame.developer,
         sourceGame.platformName,
         limit,
@@ -794,7 +822,11 @@ export class GameService {
     }
   }
 
-  async getRandomGame(library?: string, platforms?: string[]): Promise<Game | null> {
+  async getRandomGame(
+    library?: string,
+    platforms?: string[],
+    showExtreme = false
+  ): Promise<Game | null> {
     try {
       // Skip Flash SWF filter when explicitly requesting Flash platform
       const isFlashOnlyFilter = platforms?.length === 1 && platforms[0] === 'Flash';
@@ -821,6 +853,10 @@ export class GameService {
         const placeholders = platforms.map(() => '?').join(', ');
         sql += ` AND g.platformName IN (${placeholders})`;
         params.push(...platforms);
+      }
+
+      if (!showExtreme) {
+        sql += ` AND ${MatureContentService.excludeCondition('g', params)}`;
       }
 
       sql += ` ORDER BY RANDOM() LIMIT 1`;
