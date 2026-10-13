@@ -123,10 +123,7 @@ function UserMenu() {
           }}
           className="justify-between gap-3"
         >
-          <span>
-            Show mature games
-            <span className="block text-xs text-muted-foreground">Adult, gory or hateful</span>
-          </span>
+          <span>Show mature games</span>
           <span
             aria-hidden="true"
             className={cn(
