@@ -10,10 +10,14 @@ Body (JSON): `search` (title/developer/publisher), `platform`, `series`,
 `developers`, `publishers`, `playModes`, `languages`, `library`
 (arcade|theatre), `downloaded` (boolean, optional - restrict to games whose
 data is present on disk), `tags`, `yearFrom`, `yearTo`, `dateAddedSince` (ISO
-datetime), `dateModifiedSince` (ISO datetime), `sortBy`
-(title|releaseDate|dateAdded|dateModified|developer, default: title),
-`sortOrder` (asc|desc, default: asc), `page` (default: 1), `limit` (default: 50,
-max: 100), `showBroken` (default: false), `showExtreme` (default: false)
+datetime), `dateModifiedSince` (ISO datetime), `releasedFrom`, `releasedTo`
+(YYYY-MM-DD, inclusive; only matches day-precise release dates), `sortBy`
+(title|releaseDate|dateAdded|dateModified|developer|random, default: title),
+`seed` (0-2147483647, for `random`: the same seed gives the same order across
+pages), `sortOrder` (asc|desc, default: asc), `page` (default: 1), `limit`
+(default: 50, max: 100), `showBroken` (default: false), `showExtreme` (default:
+false, include
+[mature games](../10-features/12-discovery-portal.md#mature-content))
 
 Returns paginated array with essential game fields (id, title, developer,
 platformName, library, tags, orderTitle).
@@ -39,7 +43,8 @@ with name/code and count.
 
 `GET /api/games/random?library=arcade` - No auth required
 
-Query param: `library` (optional)
+Query params: `library` (optional), `platforms` (comma-separated, optional),
+`showExtreme` (default: false)
 
 Returns single random game object.
 
@@ -137,7 +142,7 @@ canPlayInBrowser, and downloading status.
 
 `GET /api/games/:id/related?limit=10` - No auth required
 
-Query param: `limit` (default: 10, max: 50)
+Query params: `limit` (default: 10, max: 50), `showExtreme` (default: false)
 
 Returns array of related games based on developer/series/tags.
 

@@ -3,6 +3,10 @@
 This document describes the layout components that form the structure of the
 Flashpoint Web application.
 
+Public pages use `PortalLayout` instead of `AppShell`; see
+[Discovery Portal](../../10-features/12-discovery-portal.md). `AppShell` remains
+for settings and admin pages.
+
 ## Component Hierarchy
 
 ```

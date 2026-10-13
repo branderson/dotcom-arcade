@@ -37,14 +37,19 @@ grid and list view options.
 - Platform, Series, Developer, Publisher
 - Play Mode, Language, Tags
 - Year Range (1970-2100)
+- Release date range (day-precise dates, e.g. a Time Machine week)
 - Library (arcade/theatre)
 - Downloaded only
-- Show/hide broken games and extreme content
+- Show/hide broken games and
+  [mature content](./12-discovery-portal.md#mature-content)
 
 **Sorting:**
 
-- By: Title, Release Date, Date Added, Developer
+- By: Shuffled (default), Title (default for searches), Release Date, Date
+  Added, Developer
 - Order: Ascending (A-Z) or Descending (Z-A)
+- The shuffle seed is kept in the URL so pages keep a stable order; Reshuffle
+  picks a new one
 
 **Pagination:**
 
@@ -102,7 +107,9 @@ Get paginated list of games with filters.
 - `playModes`, `languages`, `tags` - Comma-separated
 - `library` - 'arcade' or 'theatre'
 - `yearFrom`, `yearTo` - Release year range
-- `sortBy` - 'title', 'releaseDate', 'dateAdded', 'developer'
+- `releasedFrom`, `releasedTo` - Release date range (YYYY-MM-DD)
+- `sortBy` - 'title', 'releaseDate', 'dateAdded', 'developer', 'random'
+- `seed` - Shuffle seed for 'random'
 - `sortOrder` - 'asc' or 'desc'
 - `page` - Page number
 - `limit` - Items per page

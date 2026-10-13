@@ -3,6 +3,10 @@
 Dynamic theme system with light/dark modes and 22 customizable color palettes.
 Uses CSS variables for instant theme switching with Zustand state management.
 
+Public pages are styled by portal color schemes instead, which override these
+tokens while mounted; see
+[Discovery Portal](../10-features/12-discovery-portal.md#color-schemes).
+
 ## Architecture
 
 ```

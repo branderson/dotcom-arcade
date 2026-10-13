@@ -67,7 +67,8 @@ Returns key-value pairs (stored as strings). Common keys:
 - game_view_mode (grid|list)
 - games_per_page (string, numeric)
 - auto_play_next (true|false)
-- show_extreme_content (true|false)
+- show_mature (1|0) - show mature games; see
+  [Mature Content](../10-features/12-discovery-portal.md#mature-content)
 
 ## Update User Settings
 

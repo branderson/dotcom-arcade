@@ -73,6 +73,11 @@ Default: 100 requests per 15 minutes. Headers: `X-RateLimit-Limit`,
 - [GET /api/games/:id/launch](./games-api.md#get-launch-data)
 - [GET /api/games/:id/related](./games-api.md#get-related-games)
 
+### Discovery
+
+- [GET /api/discovery/daily](./discovery-api.md#get-game-of-the-day)
+- [GET /api/discovery/playlists](./discovery-api.md#get-playlist-shelves)
+
 ### Users
 
 - [GET /api/users](./users-api.md#list-users)

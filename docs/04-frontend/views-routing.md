@@ -32,6 +32,13 @@ Flashpoint Web frontend.
 /activities               → ActivitiesView (requires "activities.read")
 ```
 
+## Layouts
+
+Public routes (home, browse, game and player pages, favorites, playlists,
+downloaded, dashboard) render in `PortalLayout`; settings and admin routes
+render in `MainLayout` with the sidebar. See
+[Discovery Portal](../10-features/12-discovery-portal.md).
+
 ## Route Protection
 
 ### ProtectedRoute Component
