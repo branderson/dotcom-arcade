@@ -8,12 +8,15 @@ FROM ghcr.io/linuxserver/baseimage-selkies:debiantrixie
 
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    cpulimit \
     fontconfig \
     fonts-dejavu-core \
     libasound2-plugins \
     libfontconfig1 \
     libfreetype6 \
     libgl1 \
+    libgtk2.0-0t64 \
+    libnss3 \
     libpulse0 \
     libx11-6 \
     libxcomposite1 \
@@ -26,7 +29,8 @@ RUN apt-get update && \
     libxrender1 \
     libxtst6 \
     libxxf86vm1 \
-    sqlite3 && \
+    sqlite3 \
+    xdotool && \
   rm -rf /var/lib/apt/lists/*
 
 COPY root/ /

@@ -13,6 +13,7 @@ services:
       - FLASHPOINT_HOST_PATH
       - API_TOKEN=${API_TOKEN:?API_TOKEN is required}
       - MAX_SESSIONS=${MAX_SESSIONS:-4}
+      - STREAM_PLATFORMS=${STREAM_PLATFORMS:-Java,Shockwave,Flash}
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
     networks:

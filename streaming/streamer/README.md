@@ -2,9 +2,10 @@
 
 Runs a Flashpoint game natively on the server and streams it to the browser with
 [Selkies](https://github.com/selkies-project/selkies), for platforms that cannot
-run in a browser. One container plays one game, set by `GAME_ID`. It supports
-Java applets, and Windows games installed under `LocalGames/` (see
-[local-games](../local-games/README.md)).
+run in a browser. One container plays one game, set by `GAME_ID`. It launches
+games the way Flashpoint's Linux launcher does, so Java applets, Shockwave,
+Flash and Windows games installed under `LocalGames/` (see
+[local-games](../local-games/README.md)) all run.
 
 ## Requirements
 
@@ -40,10 +41,17 @@ Selkies restarts the game when it exits (`RESTART_APP`).
 `appletviewer` lacks two things applets got from the browser's Java plugin, so
 the image adds them: a `netscape.javascript.JSObject` stand-in whose window has
 a `document.cookie` that persists to `/config/saves/cookies.txt`, and a policy
-allowing HTTP requests through the game server's proxy. The same jar (`applet-support/`) is loaded as a Java agent
-that removes appletviewer's menu bar and status line.
+allowing HTTP requests through the game server's proxy. The same jar
+(`applet-support/`) is loaded as a Java agent that removes appletviewer's menu
+bar and status line.
 
-Windows games run under Flashpoint's bundled Wine from a writable copy of the
-game's directory. Its `Prefs` directory, where Director projectors save, is
-linked into `/config/saves`, so the session manager syncs it to the player's
-browser. A player without a save starts from the `Prefs` the game ships with.
+Other games go through `fp-command`, which applies the launcher's rules: it maps
+the application path through `Data/execs.json`, swaps `.bat` for `.sh`, and runs
+`.exe` files under Flashpoint's bundled Wine. Windows programs run from a
+writable mirror of the install, since they write beside themselves; a
+Director projector's `Prefs`, where it saves, is linked into `/config/saves`, as
+is Flash Player's save directory, so the session manager syncs both to the
+player's browser. OldCPUSimulator hangs under Wine, so its target runs under
+`cpulimit` at the same share of the CPU. Flash projectors switch to full screen,
+which hides their menu bar and scales the movie to the display, and Flashpoint
+Navigator's toolbars are hidden.
