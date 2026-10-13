@@ -50,6 +50,27 @@ body text uses Verdana.
 
 See the [Discovery API](../06-api-reference/discovery-api.md).
 
+## Game Page
+
+Game detail and play are one page (`views/GamePage.tsx`); the `/play` routes
+open the same page with the game already started. Shared playlist links keep the
+application's detail and player views.
+
+- **Stage:** the game's screenshot with its logo and a Play button (or Enter).
+  Playing loads the game in place, starting a play session and fetching the game
+  data if needed. Saves, the Ruffle / original Flash Player switch and
+  Fullscreen sit under the game; in fullscreen the player's own header bar
+  returns. Platforms that can't run in the browser or be streamed point to the
+  Flashpoint Launcher.
+- **About this game:** description, notes, and release date, developer,
+  publisher, series, platform, play mode and language; developer, publisher and
+  series link to browse.
+- **Side boxes:** the signed-in user's plays of this game, the rating, and tags
+  linking to browse.
+- **Favorite** and **Add to playlist** for signed-in users.
+- **More like this:**
+  [related games](../06-api-reference/games-api.md#get-related-games).
+
 ## Default Ordering
 
 Browse lists default to a shuffle instead of title order. The shuffle is seeded

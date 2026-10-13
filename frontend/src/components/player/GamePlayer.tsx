@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useRef, useMemo } from 'react';
+import { Fragment, useState, useEffect, useRef, useMemo, type ReactNode } from 'react';
 import { logger } from '@/lib/logger';
 import {
   AlertCircle,
@@ -17,6 +17,18 @@ import { useGameSaveSync } from '@/hooks/useGameSaveSync';
 import { useAuthStore } from '@/store/auth';
 import { PlayerErrorBoundary } from './PlayerErrorBoundary';
 import { PlatformIcon } from '@/components/ui/platform-icon';
+
+/** Player actions, for pages that place the controls themselves */
+export interface PlayerControls {
+  isFullscreen: boolean;
+  toggleFullscreen: () => void;
+  /** Whether the original Flash Player is in use instead of Ruffle */
+  preferStream: boolean;
+  /** Present when the game can switch between Ruffle and the original Flash Player */
+  togglePlayer?: () => void;
+  /** Present for signed-in players, whose saves are kept on their account */
+  openSaves?: () => void;
+}
 
 export interface GamePlayerProps {
   /** Required to stream games that can't run in a browser */
@@ -41,6 +53,8 @@ export interface GamePlayerProps {
   developer?: string;
   /** Callback for back button (shown in fullscreen mode) */
   onBack?: () => void;
+  /** Renders the controls below the game instead of the header bar, outside fullscreen */
+  renderControls?: (controls: PlayerControls) => ReactNode;
 }
 
 /**
@@ -66,6 +80,7 @@ function GamePlayerInternal({
   logoUrl,
   developer,
   onBack,
+  renderControls,
 }: GamePlayerProps) {
   const [isFullscreen, setIsFullscreen] = useState(initialFullscreen);
   // Streams a game Ruffle can play with the original player, for when Ruffle falls short
@@ -181,7 +196,7 @@ function GamePlayerInternal({
 
   return (
     <div className={`${containerClasses} ${isAspectVideo ? 'flex flex-col' : ''}`}>
-      {showControls ? (
+      {showControls && (isFullscreen || !renderControls) ? (
         <div
           className={`flex items-center justify-between bg-card/90 backdrop-blur-sm flex-shrink-0 border-b border-border ${
             isFullscreen ? 'px-4 py-3' : 'px-6 py-4'
@@ -421,6 +436,15 @@ function GamePlayerInternal({
           </Fragment>
         )}
       </div>
+      {renderControls && !isFullscreen
+        ? renderControls({
+            isFullscreen,
+            toggleFullscreen,
+            preferStream,
+            togglePlayer: canSwitchPlayer ? () => setPreferStream((prev) => !prev) : undefined,
+            openSaves: isSignedIn && gameId ? () => setSavesOpen(true) : undefined,
+          })
+        : null}
       {isSignedIn && gameId ? (
         <SavesDialog
           gameId={gameId}

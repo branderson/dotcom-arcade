@@ -144,7 +144,9 @@ canPlayInBrowser, and downloading status.
 
 Query params: `limit` (default: 10, max: 50), `showExtreme` (default: false)
 
-Returns array of related games based on developer/series/tags.
+Returns games from the same library ranked by shared descriptive tags (meta,
+presence, warning and language tags are ignored; rarer tags weigh more), then
+the same series, then the same developer.
 
 ## Search Examples
 

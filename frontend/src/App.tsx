@@ -53,6 +53,7 @@ const AnimationsView = lazy(() =>
 const GameDetailView = lazy(() =>
   import('./views/GameDetailView').then((m) => ({ default: m.GameDetailView }))
 );
+const GamePage = lazy(() => import('./views/GamePage').then((m) => ({ default: m.GamePage })));
 const GamePlayerView = lazy(() =>
   import('./views/GamePlayerView').then((m) => ({ default: m.GamePlayerView }))
 );
@@ -350,7 +351,7 @@ function App() {
               element={
                 <ProtectedRoute requireAuth={false} allowSharedAccess={true}>
                   <Suspense fallback={<RouteLoadingFallback />}>
-                    <GameDetailView />
+                    <GamePage />
                   </Suspense>
                 </ProtectedRoute>
               }
@@ -360,7 +361,7 @@ function App() {
               element={
                 <ProtectedRoute requirePermission="games.play">
                   <Suspense fallback={<RouteLoadingFallback />}>
-                    <GamePlayerView />
+                    <GamePage autoPlay />
                   </Suspense>
                 </ProtectedRoute>
               }
@@ -370,7 +371,7 @@ function App() {
               element={
                 <ProtectedRoute requireAuth={false} allowSharedAccess={true}>
                   <Suspense fallback={<RouteLoadingFallback />}>
-                    <GameDetailView />
+                    <GamePage />
                   </Suspense>
                 </ProtectedRoute>
               }
@@ -380,7 +381,7 @@ function App() {
               element={
                 <ProtectedRoute requirePermission="games.play">
                   <Suspense fallback={<RouteLoadingFallback />}>
-                    <GamePlayerView />
+                    <GamePage autoPlay />
                   </Suspense>
                 </ProtectedRoute>
               }
@@ -390,7 +391,7 @@ function App() {
               element={
                 <ProtectedRoute requireAuth={false} allowSharedAccess={true}>
                   <Suspense fallback={<RouteLoadingFallback />}>
-                    <GameDetailView />
+                    <GamePage />
                   </Suspense>
                 </ProtectedRoute>
               }
@@ -400,7 +401,7 @@ function App() {
               element={
                 <ProtectedRoute requirePermission="games.play">
                   <Suspense fallback={<RouteLoadingFallback />}>
-                    <GamePlayerView />
+                    <GamePage autoPlay />
                   </Suspense>
                 </ProtectedRoute>
               }
@@ -410,7 +411,7 @@ function App() {
               element={
                 <ProtectedRoute requireAuth={false} allowSharedAccess={true}>
                   <Suspense fallback={<RouteLoadingFallback />}>
-                    <GameDetailView />
+                    <GamePage />
                   </Suspense>
                 </ProtectedRoute>
               }
@@ -420,7 +421,7 @@ function App() {
               element={
                 <ProtectedRoute requirePermission="games.play">
                   <Suspense fallback={<RouteLoadingFallback />}>
-                    <GamePlayerView />
+                    <GamePage autoPlay />
                   </Suspense>
                 </ProtectedRoute>
               }
@@ -432,7 +433,7 @@ function App() {
               element={
                 <ProtectedRoute requireAuth={false} allowSharedAccess={true}>
                   <Suspense fallback={<RouteLoadingFallback />}>
-                    <GameDetailView />
+                    <GamePage />
                   </Suspense>
                 </ProtectedRoute>
               }
@@ -444,7 +445,7 @@ function App() {
               element={
                 <ProtectedRoute requirePermission="games.play">
                   <Suspense fallback={<RouteLoadingFallback />}>
-                    <GamePlayerView />
+                    <GamePage autoPlay />
                   </Suspense>
                 </ProtectedRoute>
               }
