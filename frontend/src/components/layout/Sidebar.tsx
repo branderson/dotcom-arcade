@@ -76,8 +76,6 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
   const gameNavItems: NavItem[] = [
     { path: '/', icon: Home, label: 'Home' },
-    { path: '/flash', iconImage: '/images/Flash.png', label: 'Flash Games' },
-    { path: '/html5', iconImage: '/images/HTML5.png', label: 'HTML5 Games' },
     { path: '/animations', icon: Film, label: 'Animations' },
     { path: '/browse', icon: Gamepad2, label: 'Browse' },
   ];

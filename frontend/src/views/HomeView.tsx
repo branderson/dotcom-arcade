@@ -1,98 +1,16 @@
-import { useMemo } from 'react';
-import { useRecentGames } from '@/hooks/useRecentGames';
-import { useMostPlayedGames } from '@/hooks/useMostPlayedGames';
-import { useFavoriteGameIds } from '@/hooks/useFavorites';
-import { usePublicSettings } from '@/hooks/usePublicSettings';
-import { HomeSection } from '@/components/home/HomeSection';
-import { useAuthStore } from '@/store/auth';
-import { useTopRatedGames } from '@/hooks/useRatings';
-import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { GameOfTheDay } from '@/components/portal/home/GameOfTheDay';
+import { JumpBackIn, PlaylistShelves } from '@/components/portal/home/Shelves';
+import { TimeMachine } from '@/components/portal/home/TimeMachine';
 
 export function HomeView() {
-  const { isAuthenticated } = useAuthStore();
-  const { data: publicSettings } = usePublicSettings();
-
-  const recentHours = publicSettings?.app?.homeRecentHours ?? 24;
-
-  const timePeriod = useMemo(() => {
-    if (recentHours < 24) {
-      return `${recentHours} hour${recentHours !== 1 ? 's' : ''}`;
-    } else if (recentHours === 24) {
-      return '24 hours';
-    } else if (recentHours % 24 === 0) {
-      const days = recentHours / 24;
-      return `${days} day${days !== 1 ? 's' : ''}`;
-    } else {
-      const days = Math.floor(recentHours / 24);
-      const hours = recentHours % 24;
-      return `${days} day${days !== 1 ? 's' : ''} and ${hours} hour${hours !== 1 ? 's' : ''}`;
-    }
-  }, [recentHours]);
-
-  const { data: recentAdded, isLoading: loadingAdded } = useRecentGames('added', 20, recentHours);
-  const { data: recentUpdated, isLoading: loadingUpdated } = useRecentGames(
-    'modified',
-    20,
-    recentHours
-  );
-  const { data: mostPlayed, isLoading: loadingMostPlayed } = useMostPlayedGames(20);
-  const { enableRatings } = useFeatureFlags();
-  const { data: topRated, isLoading: loadingTopRated } = useTopRatedGames(20);
-
-  const { data: favoriteGameIdsArray } = useFavoriteGameIds();
-  const favoriteGameIds = useMemo(
-    () => (favoriteGameIdsArray ? new Set(favoriteGameIdsArray) : undefined),
-    [favoriteGameIdsArray]
-  );
-
   return (
-    <div className="max-w-7xl mx-auto space-y-12">
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          Welcome to Flashpoint Archive
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          Discover recently active games from the preservation archive
-        </p>
+    <div className="space-y-[18px]">
+      <div className="grid grid-cols-[minmax(0,1fr)_360px] gap-[18px]">
+        <GameOfTheDay />
+        <TimeMachine />
       </div>
-
-      {enableRatings ? (
-        <HomeSection
-          title="Highest Rated Games"
-          description="Games with the highest community ratings"
-          games={topRated ?? []}
-          isLoading={loadingTopRated}
-          viewAllHref="/browse?sortBy=rating&sortOrder=desc"
-          favoriteGameIds={isAuthenticated ? favoriteGameIds : undefined}
-        />
-      ) : null}
-
-      <HomeSection
-        title="Most Played Games"
-        description="Games with the highest play counts from the community"
-        games={mostPlayed || []}
-        isLoading={loadingMostPlayed}
-        viewAllHref="/browse?sortBy=title&sortOrder=asc"
-        favoriteGameIds={isAuthenticated ? favoriteGameIds : undefined}
-      />
-
-      <HomeSection
-        title="Recently Added Games"
-        description={`Games added in the last ${timePeriod}`}
-        games={recentAdded?.data || []}
-        isLoading={loadingAdded}
-        viewAllHref="/browse?sortBy=dateAdded&sortOrder=desc"
-        favoriteGameIds={isAuthenticated ? favoriteGameIds : undefined}
-      />
-
-      <HomeSection
-        title="Recently Updated Games"
-        description={`Games updated in the last ${timePeriod}`}
-        games={recentUpdated?.data || []}
-        isLoading={loadingUpdated}
-        viewAllHref="/browse?sortBy=dateModified&sortOrder=desc"
-        favoriteGameIds={isAuthenticated ? favoriteGameIds : undefined}
-      />
+      <JumpBackIn />
+      <PlaylistShelves />
     </div>
   );
 }

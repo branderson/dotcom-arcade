@@ -26,7 +26,11 @@ export const gamesApi = {
       yearTo: filters.yearTo,
       dateAddedSince: filters.dateAddedSince,
       dateModifiedSince: filters.dateModifiedSince,
+      releasedFrom: filters.releasedFrom,
+      releasedTo: filters.releasedTo,
+      showExtreme: filters.showExtreme,
       sortBy: filters.sortBy,
+      seed: filters.seed,
       sortOrder: filters.sortOrder,
       page: filters.page,
       limit: filters.limit,
@@ -66,18 +70,19 @@ export const gamesApi = {
     return data;
   },
 
-  getRelated: async (id: string, limit = 10): Promise<Game[]> => {
+  getRelated: async (id: string, limit = 10, showExtreme = false): Promise<Game[]> => {
     const { data } = await apiClient.get<Game[]>(`/games/${id}/related`, {
-      params: { limit },
+      params: { limit, showExtreme },
     });
     return data;
   },
 
-  getRandom: async (library?: string, platforms?: string[]): Promise<Game> => {
+  getRandom: async (library?: string, platforms?: string[], showExtreme = false): Promise<Game> => {
     const { data } = await apiClient.get<Game>('/games/random', {
       params: {
         library,
         platforms: platforms?.join(','),
+        showExtreme,
       },
     });
     return data;

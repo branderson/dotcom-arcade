@@ -2,6 +2,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MainLayout } from './components/layout/MainLayout';
+import { PortalLayout } from './components/portal/PortalLayout';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { SharedLayout } from './components/layout/SharedLayout';
 import { ErrorLayout } from './components/layout/ErrorLayout';
@@ -288,8 +289,8 @@ function App() {
           {/* ==================== STANDALONE ==================== */}
           <Route path="/maintenance" element={<MaintenancePage />} />
 
-          {/* ==================== MAIN LAYOUT ==================== */}
-          <Route element={<MainLayout />}>
+          {/* ==================== PORTAL LAYOUT ==================== */}
+          <Route element={<PortalLayout />}>
             <Route
               path="/"
               element={
@@ -523,7 +524,10 @@ function App() {
                 </ProtectedRoute>
               }
             />
+          </Route>
 
+          {/* ==================== MAIN LAYOUT (account and admin) ==================== */}
+          <Route element={<MainLayout />}>
             {/* User management routes */}
             <Route
               path="/users"

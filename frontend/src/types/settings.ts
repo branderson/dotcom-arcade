@@ -2,6 +2,7 @@ import { AuthSettings } from './auth';
 
 export interface AppSettings {
   siteName: string;
+  tagline?: string;
   maintenanceMode: boolean;
   maintenanceMessage: string;
   defaultTheme?: string;
@@ -70,7 +71,10 @@ export interface Domain {
 }
 
 export interface PublicSettings {
-  app: Pick<AppSettings, 'siteName' | 'maintenanceMode' | 'maintenanceMessage' | 'homeRecentHours'>;
+  app: Pick<
+    AppSettings,
+    'siteName' | 'tagline' | 'maintenanceMode' | 'maintenanceMessage' | 'homeRecentHours'
+  >;
   auth: Pick<AuthSettings, 'guestAccessEnabled' | 'userRegistrationEnabled'>;
   features?: Partial<FeatureSettings>;
   metadata?: {

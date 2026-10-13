@@ -5,6 +5,7 @@ import { ReactNode } from 'react';
 import { useGames, useGame, useRelatedGames, useRandomGame } from './useGames';
 import { mockGame } from '@/test/mocks/handlers';
 import { gamesApi } from '@/lib/api';
+import { useMatureStore } from '@/store/mature';
 
 // Create a wrapper with QueryClient for hooks that use useQuery
 function createWrapper() {
@@ -224,7 +225,7 @@ describe('useGames', () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(getRandomSpy).toHaveBeenCalledWith('arcade', undefined);
+      expect(getRandomSpy).toHaveBeenCalledWith('arcade', undefined, false);
 
       getRandomSpy.mockRestore();
     });
@@ -239,7 +240,7 @@ describe('useGames', () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(getRandomSpy).toHaveBeenCalledWith(undefined, platforms);
+      expect(getRandomSpy).toHaveBeenCalledWith(undefined, platforms, false);
 
       getRandomSpy.mockRestore();
     });
@@ -255,7 +256,7 @@ describe('useGames', () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(getRandomSpy).toHaveBeenCalledWith(library, platforms);
+      expect(getRandomSpy).toHaveBeenCalledWith(library, platforms, false);
 
       getRandomSpy.mockRestore();
     });
@@ -271,7 +272,7 @@ describe('useGames', () => {
       });
 
       // Verify the exact array is passed (order preserved)
-      expect(getRandomSpy).toHaveBeenCalledWith(undefined, ['HTML5', 'Flash']);
+      expect(getRandomSpy).toHaveBeenCalledWith(undefined, ['HTML5', 'Flash'], false);
 
       getRandomSpy.mockRestore();
     });
@@ -303,11 +304,17 @@ describe('useGames', () => {
       });
 
       // Check that the query is cached with the expected key
-      const cachedData = queryClient.getQueryData(['games', 'random', library, platforms]);
+      const cachedData = queryClient.getQueryData(['games', 'random', library, platforms, false]);
       expect(cachedData).toBeDefined();
 
       // Verify different parameters create different cache entries
-      const otherCachedData = queryClient.getQueryData(['games', 'random', 'arcade', platforms]);
+      const otherCachedData = queryClient.getQueryData([
+        'games',
+        'random',
+        'arcade',
+        platforms,
+        false,
+      ]);
       expect(otherCachedData).toBeUndefined();
     });
 
@@ -348,11 +355,25 @@ describe('useGames', () => {
       });
 
       // Both should be cached separately
-      const cached1 = queryClient.getQueryData(['games', 'random', undefined, platforms1]);
-      const cached2 = queryClient.getQueryData(['games', 'random', undefined, platforms2]);
+      const cached1 = queryClient.getQueryData(['games', 'random', undefined, platforms1, false]);
+      const cached2 = queryClient.getQueryData(['games', 'random', undefined, platforms2, false]);
 
       expect(cached1).toBeDefined();
       expect(cached2).toBeDefined();
+    });
+
+    it('should include mature games only when the user opted in', async () => {
+      const getRandomSpy = vi.spyOn(gamesApi, 'getRandom');
+      useMatureStore.setState({ showMature: true });
+
+      const { result } = renderHook(() => useRandomGame('arcade'), { wrapper: createWrapper() });
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(getRandomSpy).toHaveBeenCalledWith('arcade', undefined, true);
+      useMatureStore.setState({ showMature: false });
+      getRandomSpy.mockRestore();
     });
   });
 });

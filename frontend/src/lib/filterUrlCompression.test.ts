@@ -4,6 +4,8 @@ import {
   parseFilterParams,
   compressFilters,
   decompressFilters,
+  defaultSortBy,
+  type FilterUrlParams,
 } from './filterUrlCompression';
 
 describe('downloaded filter URL round-trip', () => {
@@ -29,5 +31,36 @@ describe('downloaded filter URL round-trip', () => {
   it('leaves downloaded undefined when absent', () => {
     const parsed = parseFilterParams(new URLSearchParams());
     expect(parsed.downloaded).toBeUndefined();
+  });
+});
+
+describe('release range and shuffle URL round-trip', () => {
+  const roundTrip = (params: FilterUrlParams) => parseFilterParams(buildFilterSearchParams(params));
+
+  it('round-trips a release date range', () => {
+    const parsed = roundTrip({ releasedFrom: '2008-06-03', releasedTo: '2008-06-09' });
+    expect(parsed.releasedFrom).toBe('2008-06-03');
+    expect(parsed.releasedTo).toBe('2008-06-09');
+  });
+
+  it('reads a release range from legacy params', () => {
+    const parsed = parseFilterParams(new URLSearchParams('releasedFrom=2008-06-03&sortBy=title'));
+    expect(parsed.releasedFrom).toBe('2008-06-03');
+    expect(parsed.sortBy).toBe('title');
+  });
+
+  it('shuffles by default, keeping the seed, but lists searches by title', () => {
+    const shuffled = buildFilterSearchParams({ tags: 'Puzzle', seed: 42 });
+    expect(shuffled.get('sortBy')).toBeNull();
+    expect(shuffled.get('seed')).toBe('42');
+    expect(parseFilterParams(shuffled).seed).toBe(42);
+
+    const byTitle = buildFilterSearchParams({ tags: 'Puzzle', sortBy: 'title', seed: 42 });
+    expect(byTitle.get('sortBy')).toBe('title');
+    expect(byTitle.get('seed')).toBeNull();
+
+    expect(buildFilterSearchParams({ search: 'cat', sortBy: 'title' }).get('sortBy')).toBeNull();
+    expect(defaultSortBy({ search: 'cat' })).toBe('title');
+    expect(defaultSortBy({})).toBe('random');
   });
 });

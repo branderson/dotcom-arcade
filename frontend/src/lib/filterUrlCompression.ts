@@ -14,8 +14,13 @@ export interface FilterUrlParams {
   tags?: string;
   yearFrom?: number;
   yearTo?: number;
+  /** YYYY-MM-DD release date range */
+  releasedFrom?: string;
+  releasedTo?: string;
   sortBy?: string;
   sortOrder?: string;
+  /** Shuffle seed for the random sort, so pages stay stable */
+  seed?: number;
   page?: number;
   fo?: string; // filter order
   /** '1' = downloaded only, '0' = explicitly off, undefined = use the admin default */
@@ -33,6 +38,7 @@ const CATEGORY_TO_ABBR: Record<string, string> = {
   Language: 'L',
   Tag: 'T',
   Year: 'Y',
+  Released: 'N',
   Downloaded: 'W',
 };
 
@@ -107,6 +113,8 @@ function toUrlSafeFormat(params: FilterUrlParams): string | null {
   if (params.tags) parts.push(`t.${escapeValue(params.tags)}`);
   if (params.yearFrom !== undefined) parts.push(`f.${params.yearFrom}`);
   if (params.yearTo !== undefined) parts.push(`e.${params.yearTo}`);
+  if (params.releasedFrom) parts.push(`a.${escapeValue(params.releasedFrom)}`);
+  if (params.releasedTo) parts.push(`z.${escapeValue(params.releasedTo)}`);
   if (params.downloaded !== undefined) parts.push(`w.${params.downloaded}`);
   if (params.fo) parts.push(`o.${encodeFilterOrder(params.fo)}`);
 
@@ -164,6 +172,12 @@ function fromUrlSafeFormat(encoded: string): FilterUrlParams | null {
           if (!isNaN(parsed)) params.yearTo = parsed;
           break;
         }
+        case 'a':
+          params.releasedFrom = unescapeValue(value);
+          break;
+        case 'z':
+          params.releasedTo = unescapeValue(value);
+          break;
         case 'o':
           params.fo = decodeFilterOrder(value);
           break;
@@ -353,6 +367,7 @@ export function parseFilterParams(searchParams: URLSearchParams): FilterUrlParam
         ...decompressed,
         sortBy: searchParams.get('sortBy') ?? undefined,
         sortOrder: searchParams.get('sortOrder') ?? undefined,
+        seed: safeParseInt(searchParams.get('seed')),
         page: safeParseInt(searchParams.get('page')),
       };
     }
@@ -370,8 +385,11 @@ export function parseFilterParams(searchParams: URLSearchParams): FilterUrlParam
     tags: searchParams.get('tags') ?? undefined,
     yearFrom: safeParseInt(searchParams.get('yearFrom')),
     yearTo: safeParseInt(searchParams.get('yearTo')),
+    releasedFrom: searchParams.get('releasedFrom') ?? undefined,
+    releasedTo: searchParams.get('releasedTo') ?? undefined,
     sortBy: searchParams.get('sortBy') ?? undefined,
     sortOrder: searchParams.get('sortOrder') ?? undefined,
+    seed: safeParseInt(searchParams.get('seed')),
     page: safeParseInt(searchParams.get('page')),
     fo: searchParams.get('fo') ?? undefined,
     downloaded:
@@ -381,6 +399,11 @@ export function parseFilterParams(searchParams: URLSearchParams): FilterUrlParam
           ? '0'
           : undefined,
   };
+}
+
+/** Searches list by title; everything else is shuffled */
+export function defaultSortBy(params: Pick<FilterUrlParams, 'search'>): string {
+  return params.search ? 'title' : 'random';
 }
 
 /**
@@ -397,11 +420,14 @@ export function buildFilterSearchParams(params: FilterUrlParams): URLSearchParam
   }
 
   // Keep sort and page as regular params (for readability and SEO)
-  if (params.sortBy && params.sortBy !== 'title') {
+  if (params.sortBy && params.sortBy !== defaultSortBy(params)) {
     newParams.set('sortBy', params.sortBy);
   }
   if (params.sortOrder && params.sortOrder !== 'asc') {
     newParams.set('sortOrder', params.sortOrder);
+  }
+  if (params.seed !== undefined && (params.sortBy ?? defaultSortBy(params)) === 'random') {
+    newParams.set('seed', params.seed.toString());
   }
   if (params.page && params.page > 1) {
     newParams.set('page', params.page.toString());
@@ -425,6 +451,8 @@ export function hasLegacyParams(searchParams: URLSearchParams): boolean {
     'tags',
     'yearFrom',
     'yearTo',
+    'releasedFrom',
+    'releasedTo',
     'fo',
     'downloaded',
   ];

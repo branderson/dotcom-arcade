@@ -23,8 +23,11 @@ import {
   parseFilterParams,
   buildFilterSearchParams,
   hasLegacyParams,
+  defaultSortBy,
   FilterUrlParams,
 } from '@/lib/filterUrlCompression';
+
+const newSeed = () => Math.floor(Math.random() * 2 ** 30);
 
 interface GameBrowseLayoutProps {
   title: string;
@@ -71,6 +74,18 @@ export function GameBrowseLayout({
     }
   }, [searchParams, setSearchParams]);
 
+  // A shuffle needs a seed in the URL so paging, back and shared links keep the same order
+  useEffect(() => {
+    if (
+      (urlParams.sortBy ?? defaultSortBy(urlParams)) === 'random' &&
+      urlParams.seed === undefined
+    ) {
+      setSearchParams(buildFilterSearchParams({ ...urlParams, seed: newSeed() }), {
+        replace: true,
+      });
+    }
+  }, [urlParams, setSearchParams]);
+
   const { enableDownloadedFilterDefault } = useFeatureFlags();
 
   const downloaded = useMemo(() => {
@@ -94,8 +109,11 @@ export function GameBrowseLayout({
       tags: urlParams.tags,
       yearFrom: urlParams.yearFrom,
       yearTo: urlParams.yearTo,
-      sortBy: urlParams.sortBy ?? 'title',
+      releasedFrom: urlParams.releasedFrom,
+      releasedTo: urlParams.releasedTo,
+      sortBy: urlParams.sortBy ?? defaultSortBy(urlParams),
       sortOrder: (urlParams.sortOrder as 'asc' | 'desc') ?? 'asc',
+      seed: urlParams.seed,
       page: urlParams.page ?? 1,
       limit: 50,
     }),
@@ -160,10 +178,24 @@ export function GameBrowseLayout({
       }
     }
 
-    return parts.length > 0 ? parts.join(' ') : title;
-  }, [filters.search, filters.platform, filters.tags, title]);
+    if (parts.length === 0 && filters.releasedFrom) {
+      return `Released ${filters.releasedFrom} to ${filters.releasedTo ?? 'today'}`;
+    }
 
-  const { data, isLoading, error } = useGames(filters);
+    return parts.length > 0 ? parts.join(' ') : title;
+  }, [
+    filters.search,
+    filters.platform,
+    filters.tags,
+    filters.releasedFrom,
+    filters.releasedTo,
+    title,
+  ]);
+
+  // The shuffle waits for its seed rather than fetching an order it is about to replace
+  const { data, isLoading, error } = useGames(filters, {
+    enabled: filters.sortBy !== 'random' || filters.seed !== undefined,
+  });
 
   // Fetch batch rating aggregates for visible games
   const gameIds = useMemo(() => data?.data.map((g) => g.id) ?? [], [data]);
@@ -314,6 +346,16 @@ export function GameBrowseLayout({
       });
     }
 
+    if (filters.releasedFrom || filters.releasedTo) {
+      chips.push({
+        id: 'releaseRange',
+        label: 'Released',
+        value: `${filters.releasedFrom ?? '...'} to ${filters.releasedTo ?? '...'}`,
+        category: 'Released',
+        order: getOrder('Released'),
+      });
+    }
+
     // Sort chips by order to maintain hierarchy (application order)
     return chips.sort((a, b) => a.order - b.order);
   }, [filters, platform, filterOrder, forceDownloaded]);
@@ -348,6 +390,10 @@ export function GameBrowseLayout({
         newParams.yearFrom = undefined;
         newParams.yearTo = undefined;
         categoryRemoved = 'Year';
+      } else if (chipId === 'releaseRange') {
+        newParams.releasedFrom = undefined;
+        newParams.releasedTo = undefined;
+        categoryRemoved = 'Released';
       } else {
         const paramMap: Record<
           string,
@@ -407,6 +453,7 @@ export function GameBrowseLayout({
         Language: ['languages'],
         Tag: ['tags'],
         Year: ['yearFrom', 'yearTo'],
+        Released: ['releasedFrom', 'releasedTo'],
       };
 
       const newParams: FilterUrlParams = { ...urlParams, page: undefined };
@@ -437,10 +484,17 @@ export function GameBrowseLayout({
     const newParams: FilterUrlParams = {
       sortBy: urlParams.sortBy,
       sortOrder: urlParams.sortOrder,
+      seed: urlParams.seed,
       downloaded: enableDownloadedFilterDefault ? '0' : undefined,
     };
     setSearchParams(buildFilterSearchParams(newParams));
-  }, [urlParams.sortBy, urlParams.sortOrder, enableDownloadedFilterDefault, setSearchParams]);
+  }, [
+    urlParams.sortBy,
+    urlParams.sortOrder,
+    urlParams.seed,
+    enableDownloadedFilterDefault,
+    setSearchParams,
+  ]);
 
   const handlePageChange = useCallback(
     (newPage: number) => {
@@ -457,6 +511,10 @@ export function GameBrowseLayout({
     },
     [urlParams, setSearchParams]
   );
+
+  const handleReshuffle = useCallback(() => {
+    setSearchParams(buildFilterSearchParams({ ...urlParams, seed: newSeed(), page: undefined }));
+  }, [urlParams, setSearchParams]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -478,6 +536,7 @@ export function GameBrowseLayout({
             sortBy={filters.sortBy}
             sortOrder={filters.sortOrder}
             onSortChange={handleSortChange}
+            onReshuffle={handleReshuffle}
           />
           <ViewOptions />
         </div>

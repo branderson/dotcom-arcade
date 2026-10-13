@@ -19,6 +19,7 @@
     "check-bundle": "VITE_ANALYZE=true vite build"
   },
   "dependencies": {
+    "@fontsource-variable/fredoka": "^5.3.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.11",

@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePublicSettings } from '@/hooks/usePublicSettings';
 import { SearchBar } from '../search/SearchBar';
 import { ThemePicker } from '../theme/ThemePicker';
-import { GitHubButton } from '../github/GitHubButton';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -113,7 +112,6 @@ export function Header({ hideSidebarToggle = false, hideSearch = false }: Header
           ) : null}
 
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            <GitHubButton />
             <ThemePicker />
 
             {(isAuthenticated || isGuest) && user ? (
