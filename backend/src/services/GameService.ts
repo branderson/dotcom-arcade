@@ -773,49 +773,67 @@ export class GameService {
     }
   }
 
+  /**
+   * Games most like this one: ranked by shared descriptive tags (rarer tags count for more),
+   * then the same series, then the same developer.
+   */
   async getRelatedGames(gameId: string, limit: number = 10, showExtreme = false): Promise<Game[]> {
     try {
-      // First get the source game
       const sourceGame = await this.getGameById(gameId);
       if (!sourceGame) {
         return [];
       }
 
-      // Find games with same developer or platform
-      const matureParams: unknown[] = [];
+      // Meta, presence, warning and language tags say little about what a game is like
+      const tags = DatabaseService.all(
+        `SELECT gt.tagId, (SELECT COUNT(*) FROM game_tags_tag c WHERE c.tagId = gt.tagId) AS games
+        FROM game_tags_tag gt
+        JOIN tag t ON t.id = gt.tagId
+        JOIN tag_category tc ON tc.id = t.categoryId
+        WHERE gt.gameId = ? AND tc.name NOT IN ('meta', 'presence', 'warning', 'language')`,
+        [gameId]
+      ) as { tagId: number; games: number }[];
+
+      const candidates: string[] = [];
+      const params: unknown[] = [];
+      if (tags.length > 0) {
+        candidates.push(
+          `SELECT gameId AS id, CASE tagId ${tags.map(() => 'WHEN ? THEN ?').join(' ')} END AS score
+          FROM game_tags_tag WHERE tagId IN (${tags.map(() => '?').join(', ')})`
+        );
+        for (const tag of tags) params.push(tag.tagId, 1 / Math.log(2 + tag.games));
+        for (const tag of tags) params.push(tag.tagId);
+      }
+      if (sourceGame.series) {
+        candidates.push('SELECT id, 1.0 FROM game WHERE library = ? AND series = ?');
+        params.push(sourceGame.library, sourceGame.series);
+      }
+      if (sourceGame.developer) {
+        candidates.push('SELECT id, 0.5 FROM game WHERE library = ? AND developer = ?');
+        params.push(sourceGame.library, sourceGame.developer);
+      }
+      if (candidates.length === 0) {
+        return [];
+      }
+
+      params.push(gameId, sourceGame.library);
       const sql = `
         SELECT
           g.id, g.title, g.alternateTitles, g.developer, g.publisher,
           g.platformName, g.platformsStr, g.library, g.tagsStr,
           g.orderTitle
-        FROM game g
-        WHERE g.id != ?
-          AND (
-            g.developer = ? OR
-            g.platformName = ?
-          )
-          ${showExtreme ? '' : 'AND ' + MatureContentService.excludeCondition('g', matureParams)}
-        ORDER BY
-          CASE
-            WHEN g.developer = ? THEN 1
-            WHEN g.platformName = ? THEN 2
-            ELSE 3
-          END,
-          RANDOM()
+        FROM (
+          SELECT id, SUM(score) AS score FROM (${candidates.join(' UNION ALL ')}) GROUP BY id
+        ) r
+        JOIN game g ON g.id = r.id
+        WHERE g.id != ? AND g.library = ?
+          ${showExtreme ? '' : 'AND ' + MatureContentService.excludeCondition('g', params)}
+        ORDER BY r.score DESC, RANDOM()
         LIMIT ?
       `;
+      params.push(limit);
 
-      const games = DatabaseService.all(sql, [
-        gameId,
-        sourceGame.developer,
-        sourceGame.platformName,
-        ...matureParams,
-        sourceGame.developer,
-        sourceGame.platformName,
-        limit,
-      ]) as Game[];
-
-      return games;
+      return (await DatabaseService.allAsync(sql, params)) as Game[];
     } catch (error) {
       logger.error('Error getting related games:', error);
       throw error;
