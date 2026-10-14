@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Launch a Flashpoint game by ID the way the Linux launcher does: start the
+# game server, mount the game's zip, then run its application through the proxy.
+set -euo pipefail
+
+FP_PATH=${FP_PATH:-/flashpoint}
+ID=${1:?usage: fp-launch <game id>}
+DB=$FP_PATH/Data/flashpoint.sqlite
+API=http://127.0.0.1:22501/fpProxy/api
+
+[[ $ID =~ ^[0-9a-f-]{36}$ ]] || { echo "Invalid game id: $ID" >&2; exit 1; }
+
+if ! curl -s -o /dev/null "$API/listmountzip"; then
+  "$FP_PATH/Server/FlashpointGameServer" -rootPath "$FP_PATH" \
+    -useInfinityServer=false -handleLegacyRequests=true &
+  until curl -s -o /dev/null "$API/listmountzip"; do sleep 0.2; done
+fi
+
+IFS=$'\x1f' read -r app cmd date_added < <(sqlite3 -readonly -separator $'\x1f' "$DB" "
+  select coalesce(nullif(d.applicationPath, ''), g.applicationPath),
+         coalesce(nullif(d.launchCommand, ''), g.launchCommand),
+         coalesce(d.dateAdded, '')
+  from game g left join game_data d on d.id = g.activeDataId
+  where g.id = '$ID'") || true
+[[ -n ${app:-} ]] || { echo "Game not found: $ID" >&2; exit 1; }
+
+if [[ -n $date_added ]]; then
+  zip=$FP_PATH/Data/Games/$ID-$(date -u -d "$date_added" +%s%3N).zip
+  curl -sf -X POST -H 'Content-Type: application/json' \
+    -d "{\"filePath\": \"$zip\"}" "$API/mountzip" >/dev/null ||
+    { echo "Failed to mount $zip" >&2; exit 1; }
+fi
+
+echo "Launching $ID: $app $cmd"
+case ${app,,} in
+  'fpsoftware\startjava.bat' | 'fpsoftware\startjavainbrowser.bat')
+    # Supplies the browser's JavaScript bridge, a browser-like network policy,
+    # and a window holding only the applet
+    export JAVA_TOOL_OPTIONS="-javaagent:/opt/flashpoint/applet-support.jar -Djava.security.policy=/opt/flashpoint/applet.policy"
+    FP_PATH=$FP_PATH exec "$FP_PATH/FPSoftware/startJava.sh" "$cmd" ;;
+  *)
+    mapfile -d '' argv < <(FP_PATH=$FP_PATH FP_WRITABLE=$HOME/flashpoint fp-command "$app" "$cmd") || true
+    (( ${#argv[@]} > 1 )) || { echo "Unsupported application: $app" >&2; exit 1; }
+    export FP_PATH HTTP_PROXY=http://127.0.0.1:22500/ http_proxy=http://127.0.0.1:22500/
+    export PATH=$FP_PATH/FPSoftware/Wine/bin:$PATH WINEDEBUG=-all WINEDLLOVERRIDES='mscoree,mshtml='
+    # Flash Player keeps saves (SharedObjects) here
+    mkdir -p "$HOME/saves/Flash_Player" "$HOME/.macromedia"
+    [[ -e $HOME/.macromedia/Flash_Player ]] || ln -s "$HOME/saves/Flash_Player" "$HOME/.macromedia/Flash_Player"
+    if [[ ${app,,} == 'fpsoftware\flash\'* ]]; then
+      # Full screen hides the projector's menu bar and scales the movie to the display
+      (xdotool search --sync --onlyvisible --name 'Flash Player' windowactivate --sync key ctrl+f) &
+    fi
+    cd "${argv[0]}"
+    exec "${argv[@]:1}" ;;
+esac

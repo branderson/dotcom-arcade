@@ -1,0 +1,1 @@
+fp-launch "$GAME_ID" >>"$HOME/fp-launch.log" 2>&1

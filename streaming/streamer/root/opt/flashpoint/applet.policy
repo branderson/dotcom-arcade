@@ -1,0 +1,9 @@
+grant {
+    permission java.net.URLPermission "http:*", "*:*";
+};
+
+grant codeBase "file:/opt/flashpoint/applet-support.jar" {
+    permission java.util.PropertyPermission "user.home", "read";
+    permission java.io.FilePermission "${user.home}${/}saves", "read,write";
+    permission java.io.FilePermission "${user.home}${/}saves${/}-", "read,write";
+};
