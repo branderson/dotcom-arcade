@@ -22,6 +22,24 @@ The app works it out by watching instead: whatever changes while a game is
 playing belongs to that game, and it remembers that for next time. The app's own
 storage is never included.
 
+## Ruffle and the original Flash Player
+
+A Flash game's saves carry over when switching between Ruffle and the original
+Flash Player (streamed). Both store SharedObjects in the same `.sol` format,
+under different names:
+
+- Ruffle keeps them in localStorage, keyed by the site's host and the path it
+  loaded the SWF from.
+- Flash Player keeps them as files under `Flash_Player/#SharedObjects/` in the
+  streamed game's saves, keyed by the SWF's own host and path.
+
+Starting the original Flash Player adds the game's Ruffle saves to the files the
+stream starts with. While it plays, its saves are copied back into Ruffle's
+storage as they change. Saves made with a `localPath` of `/` are shared by
+every game in Ruffle, so only those seen changing while this game ran are
+carried over. The first time a game switches, a save that exists in both places
+from before this keeps the streamed copy; after that the two stay in step.
+
 ## Sync
 
 Before a game starts, the app compares the browser's save with the account's

@@ -336,7 +336,11 @@ function GamePlayerInternal({
           <Fragment key={saveSync.epoch}>
             {/* Other platforms - stream from the server */}
             {isStreamed && gameId ? (
-              <StreamPlayer gameId={gameId} title={title} />
+              <StreamPlayer
+                gameId={gameId}
+                title={title}
+                swfUrl={flashContentType === 'swf' ? contentUrl : undefined}
+              />
             ) : /* Flash SWF - use Ruffle emulator */ flashContentType === 'swf' && contentUrl ? (
               <RufflePlayer
                 swfUrl={contentUrl}

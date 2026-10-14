@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { gamesApi } from '@/lib/api/games';
 import { logger } from '@/lib/logger';
+import { flashSaveContext, mirrorToRuffle, withRuffleSaves } from '@/lib/saves/flashSaves';
 import { loadSaves, storeSaves } from '@/lib/streamSaves';
 import { getErrorMessage } from '@/types/api-error';
 
 export interface StreamPlayerProps {
   gameId: string;
   title: string;
+  /** For a Flash game Ruffle can also play: its SWF, so saves carry between the two */
+  swfUrl?: string;
 }
 
 type StreamState =
@@ -19,16 +22,18 @@ type StreamState =
  * Plays a game that can't run in a browser by streaming it from a server-side
  * container. Saves are kept in this browser and synced with the container.
  */
-export function StreamPlayer({ gameId, title }: StreamPlayerProps) {
+export function StreamPlayer({ gameId, title, swfUrl }: StreamPlayerProps) {
   const [state, setState] = useState<StreamState>({ status: 'starting' });
 
   useEffect(() => {
     let cancelled = false;
     let events: EventSource | undefined;
+    const flash = swfUrl ? flashSaveContext(swfUrl, window.location.hostname) : null;
 
     (async () => {
       const session = await gamesApi.createStreamSession(gameId);
-      const files = await loadSaves(gameId);
+      const stored = await loadSaves(gameId);
+      const files = flash ? await withRuffleSaves(gameId, stored, flash) : stored;
       const response = await fetch(`${session.path}_fp/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -41,9 +46,11 @@ export function StreamPlayer({ gameId, title }: StreamPlayerProps) {
 
       events = new EventSource(`${session.path}_fp/saves`);
       events.onmessage = (event) => {
-        storeSaves(gameId, JSON.parse(event.data).files).catch((error) =>
+        const { files: latest } = JSON.parse(event.data);
+        storeSaves(gameId, latest).catch((error) =>
           logger.error('[StreamPlayer] Failed to store saves:', error)
         );
+        if (flash) mirrorToRuffle(latest, flash);
       };
       events.addEventListener('end', () => events?.close());
       setState({ status: 'running', path: session.path });
@@ -56,7 +63,7 @@ export function StreamPlayer({ gameId, title }: StreamPlayerProps) {
       cancelled = true;
       events?.close();
     };
-  }, [gameId]);
+  }, [gameId, swfUrl]);
 
   if (state.status === 'error') {
     return (
