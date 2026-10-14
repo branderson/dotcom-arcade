@@ -125,6 +125,7 @@ streamed by the session manager under `streaming/`. It runs under the
 | Variable              | Default                       | Description                                                     |
 | --------------------- | ----------------------------- | --------------------------------------------------------------- |
 | `STREAMING_API_URL`   | `http://session-manager:8080` | Session manager's internal API                                  |
+| `STREAMING_STREAM_URL` | `http://session-manager:8081` | Where the app proxies `/stream/` to                            |
 | `STREAMING_API_TOKEN` | -                             | Token shared with the session manager. Streaming is off without it |
 
 **Trusted Header Login:**

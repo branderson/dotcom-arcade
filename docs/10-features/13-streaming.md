@@ -17,7 +17,7 @@ they need the Flashpoint Launcher.
   for Flash games.
 - **The session manager** (`streaming/session-manager`) starts one streamer
   container per session through the Docker socket, and proxies the browser's
-  connection to it at `/stream/<id>/`.
+  connection to it at `/stream/<id>/`. The app forwards `/stream/` to it.
 - **The streamer** (`streaming/streamer`) launches the game the way
   Flashpoint's Linux launcher does, and streams the screen and sound with
   [Selkies](https://github.com/selkies-project/selkies). The display is sized to
@@ -37,13 +37,16 @@ and [streaming/streamer/README.md](../../streaming/streamer/README.md).
 
 - **Infinity for Linux's software.** The streamer runs Flashpoint's Linux
   builds of the game server, Java, Wine and the Flash and Shockwave players.
-  Ultimate's archives only include the Windows builds. Run
-  `scripts/setup-flashpoint.sh --with-infinity`, which adds them without
+  Ultimate's archives only include the Windows builds. Download Flashpoint
+  Infinity for Linux from Flashpoint's downloads page and pass it to
+  `scripts/setup-flashpoint.sh --infinity`, which adds the software without
   replacing anything.
 - **HTTPS.** Browsers only allow the video decoder Selkies uses on secure
   pages.
-- **A reverse proxy route** for `/stream/`, including WebSocket upgrades (see
-  below).
+- **A server with CPU to spare.** Every player streaming at once has a
+  container running the game and encoding its video on the CPU. Plan on roughly
+  1 to 2 CPU cores and 1 GB of RAM each, and a few Mbps of upload. Set
+  `MAX_SESSIONS` so the server isn't overloaded.
 
 ## Enabling it
 
@@ -63,18 +66,24 @@ sets up.
 | --------------------- | ----------------------------- | ----------------------------------------------------------------- |
 | `STREAMING_API_TOKEN` | -                             | Shared secret between the app and the session manager; required   |
 | `STREAMING_API_URL`   | `http://session-manager:8080` | Session manager's internal API                                    |
-| `STREAM_PORT`         | `8081`                        | Host port the session manager serves `/stream/` on                |
+| `STREAMING_STREAM_URL` | `http://session-manager:8081` | Where the app proxies `/stream/` to                              |
 | `MAX_SESSIONS`        | `4`                           | Most streams running at once                                      |
 | `STREAM_PLATFORMS`    | `Java,Shockwave,Flash`        | Platforms offered for streaming                                   |
 
 ## Reverse proxy
 
-Route `/stream/` to the session manager and everything else to the app. With
-nginx:
+The app proxies `/stream/` to the session manager itself, so no extra route is
+needed. A reverse proxy in front of the app must still:
+
+- pass WebSocket upgrades;
+- allow long-lived connections, at least as long as a play session;
+- not buffer responses, which would hold back the save-sync event stream.
+
+With nginx:
 
 ```nginx
-location /stream/ {
-    proxy_pass http://127.0.0.1:8081;
+location / {
+    proxy_pass http://127.0.0.1:80;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
@@ -84,16 +93,16 @@ location /stream/ {
 }
 ```
 
-If another proxy sits in front of this one, it needs WebSocket support and
-long timeouts as well. A stream that connects and then immediately fails with
-HTTP 400 usually means a proxy in the chain doesn't pass the WebSocket upgrade.
+If another proxy sits in front of this one, it needs the same. A stream that
+connects and then immediately fails with HTTP 400 usually means a proxy in the
+chain doesn't pass the WebSocket upgrade.
 
 ## Security
 
 The session manager holds the Docker socket, which is effectively root on the
-host. Expose only its `/stream/` port, and only through your proxy. Streamer
-containers run on an internal network with no internet access, reachable only
-from the session manager.
+host. It publishes no ports; only the app reaches it, on the compose network.
+Streamer containers run on an internal network with no internet access,
+reachable only from the session manager.
 
 ## Troubleshooting
 
@@ -110,4 +119,4 @@ from the session manager.
 
   `200` means the game can be streamed; `422` means it can't.
 - **The stream stays black or disconnects at once.** Check that the page is on
-  HTTPS, and that `/stream/` passes WebSocket upgrades.
+  HTTPS, and that your proxy passes WebSocket upgrades.
