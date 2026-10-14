@@ -11,18 +11,24 @@ on:
     tags: ['v*.*.*']
   workflow_dispatch:
 
+# Jobs that run docker builds use dejima-privileged; anything else should use
+# dejima-confined.
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.name }}
+    runs-on: dejima-privileged
     strategy:
       fail-fast: false
       matrix:
         include:
-          - image: dotcom-arcade
+          - name: app
+            image: dotcom-arcade
             context: .
-          - image: dotcom-arcade-session-manager
+          - name: session-manager
+            image: dotcom-arcade-session-manager
             context: streaming/session-manager
-          - image: dotcom-arcade-streamer
+          - name: streamer
+            image: dotcom-arcade-streamer
             context: streaming/streamer
     steps:
       - uses: actions/checkout@v4
