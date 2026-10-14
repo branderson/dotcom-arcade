@@ -210,6 +210,8 @@ export const config = {
   // marks the build as unreleased. `||` is deliberate: a whitespace-only value
   // must collapse to null, which `??` would not do.
   appVersion: process.env.APP_VERSION?.trim() || null,
+  // A GitHub- or Gitea-style "latest release" API URL; update checks are off without it
+  appUpdateUrl: process.env.APP_UPDATE_URL?.trim() || null,
 } as const;
 
 /** Resolves external image CDN URLs from Flashpoint preferences, with hardcoded fallbacks. */

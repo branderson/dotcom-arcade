@@ -73,6 +73,9 @@ export function AppUpdateCard() {
     setShowChangelog(true);
   }
 
+  // Without a release source (APP_UPDATE_URL) there is nothing to check
+  if (info?.enabled === false) return null;
+
   const checkFailedEntirely =
     isLoadingError || (info?.lastCheckFailed === true && info.latestVersion === null);
   const currentVersionMatchesLatest = info

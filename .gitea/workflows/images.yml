@@ -1,0 +1,65 @@
+# Builds the app, session manager and streamer images and pushes them to this
+# Gitea instance's container registry, under the repository's owner.
+#
+# Needs repository secrets REGISTRY_USERNAME and REGISTRY_TOKEN: a user, and an
+# access token of theirs with package write access.
+name: Images
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: dotcom-arcade
+            context: .
+          - image: dotcom-arcade-session-manager
+            context: streaming/session-manager
+          - image: dotcom-arcade-streamer
+            context: streaming/streamer
+    steps:
+      - uses: actions/checkout@v4
+
+      # The registry lives on the same host as this Gitea instance
+      - name: Locate the registry
+        id: registry
+        run: |
+          host=${GITHUB_SERVER_URL#*://}
+          echo "host=${host%/}" >> "$GITHUB_OUTPUT"
+          echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ steps.registry.outputs.host }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.registry.outputs.host }}/${{ steps.registry.outputs.owner }}/${{ matrix.image }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=ref,event=branch
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+          provenance: false

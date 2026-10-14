@@ -8,6 +8,8 @@
 # Usage:
 #   1. Copy .env.example to .env and set the required variables
 #   2. docker compose up -d --build
+#      (or, with IMAGE_PREFIX set to a registry's images:
+#      docker compose pull && docker compose up -d)
 #   3. For streaming, set STREAMING_API_TOKEN and COMPOSE_PROFILES=streaming in
 #      .env, then run `docker compose up -d --build` again
 #
@@ -18,7 +20,7 @@
 services:
   app:
     build: .
-    image: dotcom-arcade:${IMAGE_TAG:-latest}
+    image: ${IMAGE_PREFIX:-}dotcom-arcade:${IMAGE_TAG:-latest}
     container_name: dotcom-arcade
     restart: unless-stopped
     ports:
@@ -55,6 +57,8 @@ services:
       - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
       # Application
       - HOME_RECENT_HOURS=${HOME_RECENT_HOURS:-24}
+      # "Latest release" API URL (GitHub or Gitea) for update checks; off when unset
+      - APP_UPDATE_URL=${APP_UPDATE_URL:-}
       - ENABLE_CGI=${ENABLE_CGI:-false}
       # Streamed play for games that can't run in a browser (off unless the token is set)
       - STREAMING_API_URL=${STREAMING_API_URL:-http://session-manager:8080}
@@ -102,7 +106,7 @@ services:
   session-manager:
     profiles: [streaming]
     build: streaming/session-manager
-    image: dotcom-arcade-session-manager:${IMAGE_TAG:-latest}
+    image: ${IMAGE_PREFIX:-}dotcom-arcade-session-manager:${IMAGE_TAG:-latest}
     container_name: dotcom-arcade-session-manager
     restart: unless-stopped
     volumes:
@@ -114,7 +118,7 @@ services:
       - FLASHPOINT_HOST_PATH
       # The session manager refuses to start without it
       - API_TOKEN=${STREAMING_API_TOKEN:-}
-      - STREAMER_IMAGE=dotcom-arcade-streamer:${IMAGE_TAG:-latest}
+      - STREAMER_IMAGE=${IMAGE_PREFIX:-}dotcom-arcade-streamer:${IMAGE_TAG:-latest}
       - STREAMER_NETWORK=dotcom-arcade-streams
       - MAX_SESSIONS=${MAX_SESSIONS:-4}
       - STREAM_PLATFORMS=${STREAM_PLATFORMS:-Java,Shockwave,Flash}
@@ -128,7 +132,7 @@ services:
   streamer:
     profiles: [streaming]
     build: streaming/streamer
-    image: dotcom-arcade-streamer:${IMAGE_TAG:-latest}
+    image: ${IMAGE_PREFIX:-}dotcom-arcade-streamer:${IMAGE_TAG:-latest}
     scale: 0
 
 networks:
