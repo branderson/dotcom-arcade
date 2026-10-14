@@ -58,6 +58,7 @@ services:
       - ENABLE_CGI=${ENABLE_CGI:-false}
       # Streamed play for games that can't run in a browser (off unless the token is set)
       - STREAMING_API_URL=${STREAMING_API_URL:-http://session-manager:8080}
+      - STREAMING_STREAM_URL=${STREAMING_STREAM_URL:-http://session-manager:8081}
       - STREAMING_API_TOKEN=${STREAMING_API_TOKEN:-}
       # Sign in users named by an authenticating reverse proxy (off unless both are set)
       - TRUSTED_HEADER_USERNAME=${TRUSTED_HEADER_USERNAME:-}
@@ -96,16 +97,14 @@ services:
     networks:
       - arcade
 
-  # Starts a streamer container per player and proxies its stream at /stream/
+  # Starts a streamer container per player. The app proxies /stream/ to it, so
+  # it publishes no ports.
   session-manager:
     profiles: [streaming]
     build: streaming/session-manager
     image: dotcom-arcade-session-manager:${IMAGE_TAG:-latest}
     container_name: dotcom-arcade-session-manager
     restart: unless-stopped
-    ports:
-      # Route /stream/ on the site to this port (see streaming/README.md)
-      - "${STREAM_PORT:-8081}:8081"
     volumes:
       # Starts and removes streamer containers. Docker socket access is
       # effectively root on the host.

@@ -173,6 +173,8 @@ export const config = {
   // Java applets (flashpoint-ultimate-server). Streaming is off unless both are set.
   streamingApiUrl: process.env.STREAMING_API_URL || null,
   streamingApiToken: process.env.STREAMING_API_TOKEN || null,
+  // Where /stream/ is proxied to: the session manager's stream port
+  streamingStreamUrl: process.env.STREAMING_STREAM_URL || null,
 
   // Sign users in from a header set by an authenticating reverse proxy, such as
   // Authentik forward auth. Off unless the header name and the proxy addresses
