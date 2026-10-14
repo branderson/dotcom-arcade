@@ -56,12 +56,12 @@ export class AppUpdateService {
       return this.buildInfo();
     }
     // A forced check still respects a 60s floor. Express rate limiting allows
-    // 100 requests a minute, which is no protection for a GitHub quota of 60 an
-    // hour that this shares with the star count and the Ruffle update check.
+    // 100 requests a minute, which is no protection for a release API's quota
+    // (GitHub allows 60 an hour, shared with the Ruffle update check).
     const maxAge = force ? FORCED_REFRESH_FLOOR_MS : CACHE_TTL_MS;
     const age = this.cached === null ? Infinity : Date.now() - this.cached.fetchedAt;
     // A failure also respects the 60s floor, even when force is true, so a
-    // GitHub outage or rate limit can't be hammered every request while it
+    // source's outage or rate limit can't be hammered every request while it
     // still shares the API's blocking timeout with each caller.
     const failureAge = this.lastFailedAt === null ? Infinity : Date.now() - this.lastFailedAt;
     const withinFailureFloor = failureAge < FORCED_REFRESH_FLOOR_MS;

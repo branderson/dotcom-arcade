@@ -103,7 +103,6 @@ Two notes that save debugging time:
 | Variable             | Default | Description                                      |
 | -------------------- | ------- | ------------------------------------------------ |
 | `ENABLE_CGI`         | false   | Enable PHP CGI execution for legacy game content |
-| `HOME_RECENT_HOURS`  | 24      | Hours to look back for "recently added" games    |
 
 **Frontend Serving:**
 

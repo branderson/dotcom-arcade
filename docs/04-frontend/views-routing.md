@@ -6,24 +6,24 @@ Dotcom Arcade frontend.
 ## Route Structure
 
 ```
-/                         → Redirects to /flash-games
+/                         → HomeView (discovery homepage)
 /login                    → LoginView (no auth required)
 /register                 → RegisterView (no auth required)
 /unauthorized             → UnauthorizedView
 
 # Game Views (Public/Guest Accessible)
-/flash-games              → FlashGamesView
-/html5-games              → HTML5GamesView
 /browse                   → BrowseView
 /animations               → AnimationsView
-/games/:id                → GameDetailView
+/browse/:id               → GamePage (also /animations/:id, /games/:id)
+/flash/*, /html5/*        → Redirect to the same path under /browse
 
 # Protected Routes (Auth Required)
-/games/:id/play           → GamePlayerView (requires "games.play" permission)
+/browse/:id/play          → GamePage, game started (requires "games.play")
 /dashboard                → DashboardView
 /favorites                → FavoritesView
-/playlists                → PlaylistsView
-/playlists/:id            → PlaylistDetailView
+/playlists                → UserPlaylistsView
+/playlists/:id            → UserPlaylistDetailView
+/flashpoint-playlists     → PlaylistsView
 /settings                 → SettingsView
 
 # Admin Routes (Permission-Based)
@@ -90,17 +90,6 @@ interface ProtectedRouteProps {
 ```
 
 ## Key Views
-
-### FlashGamesView / HTML5GamesView
-
-Pre-filtered game browsing views.
-
-**Features:**
-
-- Platform-specific filtering
-- Grid/List view toggle
-- Pagination
-- Add to favorites/playlists
 
 ### BrowseView
 
@@ -191,9 +180,9 @@ Routes are configured in `App.tsx`:
     <AppShell>
       <Routes>
         {/* Public routes */}
-        <Route path="/flash-games" element={
+        <Route path="/browse" element={
           <ProtectedRoute requireAuth={false}>
-            <FlashGamesView />
+            <BrowseView />
           </ProtectedRoute>
         } />
 

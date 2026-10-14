@@ -1,4 +1,4 @@
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MainLayout } from './components/layout/MainLayout';
@@ -40,12 +40,6 @@ const InitialSetupView = lazy(() =>
 const HomeView = lazy(() => import('./views/HomeView').then((m) => ({ default: m.HomeView })));
 const BrowseView = lazy(() =>
   import('./views/BrowseView').then((m) => ({ default: m.BrowseView }))
-);
-const FlashGamesView = lazy(() =>
-  import('./views/FlashGamesView').then((m) => ({ default: m.FlashGamesView }))
-);
-const HTML5GamesView = lazy(() =>
-  import('./views/HTML5GamesView').then((m) => ({ default: m.HTML5GamesView }))
 );
 const AnimationsView = lazy(() =>
   import('./views/AnimationsView').then((m) => ({ default: m.AnimationsView }))
@@ -94,6 +88,12 @@ const RolesView = lazy(() => import('./views/RolesView').then((m) => ({ default:
 const ActivitiesView = lazy(() =>
   import('./views/ActivitiesView').then((m) => ({ default: m.ActivitiesView }))
 );
+
+/** The old /flash and /html5 sections are now part of /browse */
+function LegacySectionRedirect() {
+  const { pathname, search } = useLocation();
+  return <Navigate to={pathname.replace(/^\/(flash|html5)/, '/browse') + search} replace />;
+}
 
 function App() {
   const { isAuthenticated, isGuest, clearAuth, setGuestMode } = useAuthStore();
@@ -289,6 +289,8 @@ function App() {
 
           {/* ==================== STANDALONE ==================== */}
           <Route path="/maintenance" element={<MaintenancePage />} />
+          <Route path="/flash/*" element={<LegacySectionRedirect />} />
+          <Route path="/html5/*" element={<LegacySectionRedirect />} />
 
           {/* ==================== PORTAL LAYOUT ==================== */}
           <Route element={<PortalLayout />}>
@@ -304,26 +306,6 @@ function App() {
             />
 
             {/* Public/guest accessible routes */}
-            <Route
-              path="/flash"
-              element={
-                <ProtectedRoute requireAuth={false}>
-                  <Suspense fallback={<RouteLoadingFallback />}>
-                    <FlashGamesView />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/html5"
-              element={
-                <ProtectedRoute requireAuth={false}>
-                  <Suspense fallback={<RouteLoadingFallback />}>
-                    <HTML5GamesView />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/browse"
               element={
@@ -346,46 +328,6 @@ function App() {
             />
 
             {/* Section-based game routes - must come before /games/:id */}
-            <Route
-              path="/flash/:id"
-              element={
-                <ProtectedRoute requireAuth={false} allowSharedAccess={true}>
-                  <Suspense fallback={<RouteLoadingFallback />}>
-                    <GamePage />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/flash/:id/play"
-              element={
-                <ProtectedRoute requirePermission="games.play">
-                  <Suspense fallback={<RouteLoadingFallback />}>
-                    <GamePage autoPlay />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/html5/:id"
-              element={
-                <ProtectedRoute requireAuth={false} allowSharedAccess={true}>
-                  <Suspense fallback={<RouteLoadingFallback />}>
-                    <GamePage />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/html5/:id/play"
-              element={
-                <ProtectedRoute requirePermission="games.play">
-                  <Suspense fallback={<RouteLoadingFallback />}>
-                    <GamePage autoPlay />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/animations/:id"
               element={

@@ -12,9 +12,9 @@ export interface SectionIcon {
  * Section configuration for game routes
  */
 export interface SectionConfig {
-  /** URL prefix for game routes (e.g., '/flash') */
+  /** URL prefix for game routes (e.g., '/browse') */
   prefix: string;
-  /** Sidebar item path (e.g., '/flash') */
+  /** Sidebar item path (e.g., '/browse') */
   sidebarPath: string;
   /** Label for breadcrumbs */
   breadcrumbLabel: string;
@@ -28,20 +28,6 @@ export interface SectionConfig {
  * Section configurations keyed by section identifier
  */
 export const SECTION_CONFIGS: Record<string, SectionConfig> = {
-  flash: {
-    prefix: '/flash',
-    sidebarPath: '/flash',
-    breadcrumbLabel: 'Flash Games',
-    breadcrumbHref: '/flash',
-    icon: { type: 'image', value: '/images/Flash.png' },
-  },
-  html5: {
-    prefix: '/html5',
-    sidebarPath: '/html5',
-    breadcrumbLabel: 'HTML5 Games',
-    breadcrumbHref: '/html5',
-    icon: { type: 'image', value: '/images/HTML5.png' },
-  },
   animations: {
     prefix: '/animations',
     sidebarPath: '/animations',
@@ -65,8 +51,6 @@ export const SECTION_CONFIGS: Record<string, SectionConfig> = {
  * When breadcrumb context exists, it takes priority over prefix matching.
  */
 export const SIDEBAR_PREFIX_MAP: Record<string, readonly string[]> = {
-  '/flash': ['/flash/'],
-  '/html5': ['/html5/'],
   '/animations': ['/animations/'],
   '/browse': ['/browse/', '/games/'], // /games/ only highlights Browse on direct URL access
   '/playlists': ['/playlists/'],
@@ -76,7 +60,7 @@ export const SIDEBAR_PREFIX_MAP: Record<string, readonly string[]> = {
 
 /**
  * Get section configuration from a URL pathname
- * @param pathname - Current URL pathname (e.g., '/flash/abc-123')
+ * @param pathname - Current URL pathname (e.g., '/browse/abc-123')
  * @returns Section config if pathname matches a section route, null otherwise
  */
 export function getSectionFromPath(pathname: string): SectionConfig | null {
@@ -90,8 +74,8 @@ export function getSectionFromPath(pathname: string): SectionConfig | null {
 
 /**
  * Get section key from a URL pathname
- * @param pathname - Current URL pathname (e.g., '/flash/abc-123')
- * @returns Section key ('flash', 'html5', etc.) or null
+ * @param pathname - Current URL pathname (e.g., '/browse/abc-123')
+ * @returns Section key ('browse', 'animations') or null
  */
 export function getSectionKeyFromPath(pathname: string): string | null {
   for (const [key, config] of Object.entries(SECTION_CONFIGS)) {
@@ -105,9 +89,9 @@ export function getSectionKeyFromPath(pathname: string): string | null {
 /**
  * Build a section-based game URL
  * @param gameId - Game UUID
- * @param sectionKey - Section key ('flash', 'html5', 'animations', 'browse') or null
+ * @param sectionKey - Section key ('animations', 'browse') or null
  * @param isPlay - Whether this is a play URL (adds '/play' suffix)
- * @returns URL string (e.g., '/flash/abc-123' or '/flash/abc-123/play')
+ * @returns URL string (e.g., '/browse/abc-123' or '/browse/abc-123/play')
  */
 export function buildSectionGameUrl(
   gameId: string,
@@ -127,7 +111,7 @@ export function buildSectionGameUrl(
 
 /**
  * Derive breadcrumb context from a URL pathname
- * @param pathname - Current URL pathname (e.g., '/flash/abc-123')
+ * @param pathname - Current URL pathname (e.g., '/browse/abc-123')
  * @returns BreadcrumbContext if pathname matches a section route, null otherwise
  */
 export function getBreadcrumbContextFromPath(pathname: string): BreadcrumbContext | null {

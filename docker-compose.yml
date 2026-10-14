@@ -56,7 +56,6 @@ services:
       - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-60000}
       - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
       # Application
-      - HOME_RECENT_HOURS=${HOME_RECENT_HOURS:-24}
       # "Latest release" API URL (GitHub or Gitea) for update checks; off when unset
       - APP_UPDATE_URL=${APP_UPDATE_URL:-}
       - ENABLE_CGI=${ENABLE_CGI:-false}

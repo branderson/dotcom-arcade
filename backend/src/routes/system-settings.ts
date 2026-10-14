@@ -80,11 +80,6 @@ router.get(
       Record<string, unknown>
     > = systemSettings.getPublicSettings();
 
-    if (!publicSettings.app) {
-      publicSettings.app = {};
-    }
-    publicSettings.app.homeRecentHours = config.homeRecentHours;
-
     // Inject edition/version from config (auto-detected from version.txt, not stored in DB)
     if (!publicSettings.metadata) {
       publicSettings.metadata = {};

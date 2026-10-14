@@ -167,8 +167,6 @@ export const config = {
 
   bcryptSaltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS || '', 10) || 10,
 
-  homeRecentHours: parseInt(process.env.HOME_RECENT_HOURS || '', 10) || 24,
-
   // Session manager that streams games which can't run in a browser, such as
   // Java applets (flashpoint-ultimate-server). Streaming is off unless both are set.
   streamingApiUrl: process.env.STREAMING_API_URL || null,

@@ -28,7 +28,7 @@ interface GameListItemProps {
   isFavoritePage?: boolean;
   shareToken?: string | null;
   breadcrumbContext?: BreadcrumbContext;
-  /** Section key for URL building ('flash', 'html5', 'animations', 'browse') */
+  /** Section key for URL building ('animations', 'browse') */
   sectionKey?: string | null;
   /** Rating aggregate data for this game */
   ratingData?: BatchRatingAggregate;
