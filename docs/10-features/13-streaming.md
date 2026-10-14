@@ -106,6 +106,11 @@ reachable only from the session manager.
 
 ## Troubleshooting
 
+`docker compose logs session-manager` shows each session as it's created,
+becomes ready (with how long it took) and is removed, with the reason. When a
+streamer fails to start, the log says why: its exit code and its last lines of
+output. The app then reports "game failed to start" to the player.
+
 - **No "Original Flash Player" button, or "needs the Flashpoint Launcher" on
   Java and Shockwave games.** The session manager isn't running, the tokens
   don't match, or it can't resolve the game's launcher; check that Infinity's
