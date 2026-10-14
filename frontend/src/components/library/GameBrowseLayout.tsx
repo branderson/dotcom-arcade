@@ -35,7 +35,7 @@ interface GameBrowseLayoutProps {
   platform?: string;
   headerContent?: ReactNode;
   breadcrumbContext?: BreadcrumbContext;
-  /** Section key for URL building ('flash', 'html5', 'animations', 'browse') */
+  /** Section key for URL building ('animations', 'browse') */
   sectionKey?: string | null;
   /** Pin the downloaded filter on and hide its switch (used by the Downloaded page) */
   forceDownloaded?: boolean;

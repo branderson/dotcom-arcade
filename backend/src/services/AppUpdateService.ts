@@ -3,12 +3,13 @@ import { config } from '../config';
 import { logger } from '../utils/logger';
 import { compareVersions, isReleaseVersion, normalizeVersion } from '../utils/version';
 
-const LATEST_RELEASE_URL = 'https://api.github.com/repos/darkraise/flashpoint-web/releases/latest';
 const CACHE_TTL_MS = 60 * 60 * 1000;
 const FORCED_REFRESH_FLOOR_MS = 60 * 1000;
 const REQUEST_TIMEOUT_MS = 10000;
 
 export interface AppUpdateInfo {
+  /** False when no release source is configured (APP_UPDATE_URL) */
+  enabled: boolean;
   currentVersion: string | null;
   latestVersion: string | null;
   updateAvailable: boolean;
@@ -28,7 +29,8 @@ interface CachedRelease {
   fetchedAt: number;
 }
 
-interface GitHubRelease {
+/** The fields GitHub's and Gitea's release APIs have in common */
+interface Release {
   tag_name?: unknown;
   published_at?: unknown;
   html_url?: unknown;
@@ -50,13 +52,16 @@ export class AppUpdateService {
   private static lastFailedAt: number | null = null;
 
   static async getUpdateInfo(force = false): Promise<AppUpdateInfo> {
+    if (config.appUpdateUrl === null) {
+      return this.buildInfo();
+    }
     // A forced check still respects a 60s floor. Express rate limiting allows
-    // 100 requests a minute, which is no protection for a GitHub quota of 60 an
-    // hour that this shares with the star count and the Ruffle update check.
+    // 100 requests a minute, which is no protection for a release API's quota
+    // (GitHub allows 60 an hour, shared with the Ruffle update check).
     const maxAge = force ? FORCED_REFRESH_FLOOR_MS : CACHE_TTL_MS;
     const age = this.cached === null ? Infinity : Date.now() - this.cached.fetchedAt;
     // A failure also respects the 60s floor, even when force is true, so a
-    // GitHub outage or rate limit can't be hammered every request while it
+    // source's outage or rate limit can't be hammered every request while it
     // still shares the API's blocking timeout with each caller.
     const failureAge = this.lastFailedAt === null ? Infinity : Date.now() - this.lastFailedAt;
     const withinFailureFloor = failureAge < FORCED_REFRESH_FLOOR_MS;
@@ -69,7 +74,7 @@ export class AppUpdateService {
       } catch (error: unknown) {
         this.lastCheckFailed = true;
         this.lastFailedAt = Date.now();
-        logger.warn('[AppUpdate] Could not reach GitHub for the latest release', {
+        logger.warn('[AppUpdate] Could not fetch the latest release', {
           error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
@@ -96,19 +101,19 @@ export class AppUpdateService {
   }
 
   private static async requestLatestRelease(): Promise<CachedRelease> {
-    const response = await axios.get(LATEST_RELEASE_URL, {
+    const response = await axios.get(config.appUpdateUrl ?? '', {
       timeout: REQUEST_TIMEOUT_MS,
       headers: {
-        Accept: 'application/vnd.github.v3+json',
-        'User-Agent': 'Flashpoint-Web',
+        Accept: 'application/json',
+        'User-Agent': 'Dotcom-Arcade',
       },
     });
 
-    const release = (response.data ?? {}) as GitHubRelease;
+    const release = (response.data ?? {}) as Release;
     const tagName = asString(release.tag_name);
 
     if (tagName === null) {
-      throw new Error('GitHub release response carried no tag_name');
+      throw new Error('Release response carried no tag_name');
     }
 
     return {
@@ -131,6 +136,7 @@ export class AppUpdateService {
         : null;
 
     return {
+      enabled: config.appUpdateUrl !== null,
       currentVersion,
       latestVersion: latest?.version ?? null,
       updateAvailable: comparison !== null && comparison < 0,

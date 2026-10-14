@@ -44,6 +44,8 @@ import { zipManager } from './game/zip-manager';
 import { gameZipServer } from './game/gamezipserver';
 import gameProxyRouter from './routes/game-proxy';
 import gameZipRouter from './routes/game-zip';
+import { mountStreamProxy } from './routes/streamProxy';
+import { StreamingService } from './services/StreamingService';
 
 /**
  * Compute SHA-256 CSP hashes for inline <script> blocks (those without a src
@@ -111,6 +113,13 @@ async function startServer() {
   };
   app.use('/game-proxy', gameCors, startupGate, gameProxyRouter);
   app.use('/game-zip', gameCors, startupGate, gameZipRouter);
+
+  // Streams are proxied before helmet and compression, which would break the
+  // streamer's page and its event stream
+  const attachStreamProxy =
+    StreamingService.isEnabled() && config.streamingStreamUrl
+      ? mountStreamProxy(app, config.streamingStreamUrl)
+      : null;
 
   // When the backend also serves the SPA, allow the app's own resources by
   // hash/keyword rather than the blanket 'unsafe-inline'/'unsafe-eval':
@@ -230,6 +239,7 @@ async function startServer() {
     logger.info(`🎮 Game content: /game-proxy/* and /game-zip/* (integrated)`);
     logger.info(`🌍 Environment: ${config.nodeEnv}`);
   });
+  attachStreamProxy?.(server);
 
   // Prevent connection exhaustion - critical for handling game file requests
   server.keepAliveTimeout = 65000; // 65s - slightly above common load balancer timeout

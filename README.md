@@ -17,6 +17,21 @@ Flash Player stream from your server.
 > Flashpoint Archive. It's built on
 > [flashpoint-web](https://github.com/darkraise/flashpoint-web) by darkraise.
 
+## Before you start: hosting requirements
+
+> [!WARNING]
+>
+> **Dotcom Arcade needs a lot of disk, and streaming needs a lot of CPU.** Check
+> these before you download anything.
+
+| Resource      | Needed                                                                                                                                                                                                                       |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Storage**   | **More than 2.3 TB** for Flashpoint Ultimate 14, and growing with each release. 4.6 TB if you keep the downloaded archives to seed them. A spare desktop drive won't do.                                                     |
+| **Time**      | A day or more to download and extract, depending on your connection and disks.                                                                                                                                               |
+| **Server**    | Linux with Docker. 2 CPU cores and 4 GB of RAM serve the site and in-browser games to a household.                                                                                                                           |
+| **Streaming** | Optional, and heavy: every player gets their own container running the game and encoding its video on the CPU. Plan on roughly 1 to 2 CPU cores and 1 GB of RAM per player streaming at once, and a few Mbps of upload each. |
+| **HTTPS**     | Required for streaming, since browsers only allow its video decoder on secure pages. Recommended anyway.                                                                                                                     |
+
 ## Features
 
 - **Plays almost everything.**
@@ -54,27 +69,50 @@ Flash Player stream from your server.
 
 ## Getting started
 
-You need a Linux server with Docker, and enough disk for Flashpoint Ultimate:
-about 2.3 TB for version 14, or 4.6 TB if you keep the downloaded archives to
-seed. Expect the download and extraction to take a day or more.
+Check the [hosting requirements](#before-you-start-hosting-requirements) first.
 
 ### 1. Get Flashpoint Ultimate
 
-[`scripts/setup-flashpoint.sh`](scripts/setup-flashpoint.sh) downloads the
-torrent with `aria2c` and then extracts each archive in turn. It checks free
-space before each one and deletes it afterwards, so the disk never needs room
-for both. It also pulls the database, settings and playlists out of
-`Base_1.zip`, which otherwise only holds Windows software. Re-run it to resume
-after an interruption.
+Download two files from Flashpoint's
+[downloads page](https://flashpointarchive.org/downloads):
+
+- the **Flashpoint Ultimate** `.torrent` file;
+- **Flashpoint Infinity for Linux** (`.7z`), whose software streaming needs.
+
+[`scripts/setup-flashpoint.sh`](scripts/setup-flashpoint.sh) then does the rest:
+
+- It checks that you have the disk space, and stops before downloading anything
+  if you don't.
+- It downloads the torrent with `aria2c`.
+- It extracts each archive in turn and deletes it afterwards, so the disk never
+  needs room for both.
+- It pulls the database, settings and playlists out of `Base_1.zip`, which
+  otherwise only holds Windows software.
+
+Re-run it to resume after an interruption.
 
 ```sh
 sudo apt install aria2 7zip tmux
 tmux new -s flashpoint
-scripts/setup-flashpoint.sh --with-infinity /srv/flashpoint
+scripts/setup-flashpoint.sh --torrent FlashpointUltimate14.torrent \
+  --infinity fp14.0.3_lin_20251201.7z --seed-ratio 1.0 /srv/flashpoint
 ```
 
-`--with-infinity` adds Flashpoint Infinity for Linux's software, which streaming
-needs. `--keep-archives` keeps the archives so you can keep seeding.
+#### Please seed
+
+Flashpoint Ultimate is shared over BitTorrent, and stays available only as long
+as people seed it. If you can, give back at least what you downloaded:
+
+- **Seed before extracting.** `--seed-ratio 1.0` keeps seeding after the
+  download until you've uploaded as much as you downloaded. `--seed-hours 24`
+  seeds for a day. With both, seeding stops at whichever comes first. This needs
+  no extra disk space, but extraction waits until seeding stops.
+- **Seed for the long term.** `--keep-archives` keeps the archives after
+  extracting (about 4.6 TB in total), so a torrent client such as qBittorrent or
+  Transmission can go on seeding the downloads directory.
+- **Let peers reach you.** The download listens on ports 6881-6999, TCP and UDP.
+  Forwarding them on your router and allowing them through your firewall lets
+  more people download from you.
 
 ### 2. Configure
 
@@ -105,7 +143,7 @@ Under **Settings → App** you can set the site name and tagline.
 
 Streaming plays the games browsers can't. To turn it on:
 
-1. Run the setup script with `--with-infinity`.
+1. Run the setup script with `--infinity`.
 2. Add to `.env`:
 
    ```sh
@@ -114,13 +152,12 @@ Streaming plays the games browsers can't. To turn it on:
    ```
 
 3. Rebuild with `docker compose up -d --build`.
-4. Route `/stream/` on your site to the session manager (port 8081). Streams
-   need HTTPS. See the [streaming guide](docs/10-features/13-streaming.md) for
-   an nginx example.
+4. Serve the site over HTTPS. The app proxies streams itself, so your reverse
+   proxy only needs to pass WebSocket upgrades and allow long-lived connections.
+   See the [streaming guide](docs/10-features/13-streaming.md).
 
 The session manager starts containers through the Docker socket, which amounts
-to root on the host. Keep it off the public internet. Only `/stream/` needs to
-be reachable, and only through your proxy.
+to root on the host. It publishes no ports: only the app talks to it.
 
 ### Signing in through a reverse proxy
 
@@ -155,6 +192,15 @@ and development. Useful starting points:
 - [Ruffle](https://ruffle.rs/), for running Flash in modern browsers.
 - [Selkies](https://github.com/selkies-project/selkies), which streams the
   games.
+
+## Legal
+
+Flashpoint Archive is a preservation project whose legal standing has never been
+settled. It removes games when their rights holders ask. Dotcom Arcade contains
+no games and links to no game downloads. You get Flashpoint from Flashpoint's
+own site, and you are responsible for complying with copyright law where you
+live. Rights holders who want a game removed should contact
+[Flashpoint Archive](https://flashpointarchive.org/).
 
 ## License
 

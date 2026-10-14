@@ -25,7 +25,6 @@ import ratingsRouter from './ratings';
 import gameSavesRouter from './game-saves';
 import discoveryRouter from './discovery';
 import ruffleRouter from './ruffle';
-import githubRouter from './github';
 import domainsRouter from './domains';
 import healthRouter from './health';
 import cacheRouter from './cache';
@@ -40,7 +39,6 @@ export function setupRoutes(app: Express): void {
   app.use('/api/settings/auth', authSettingsRouter);
   app.use('/api/settings', systemSettingsRouter);
   app.use('/api/ruffle', ruffleRouter);
-  app.use('/api/github', githubRouter);
   app.use('/api/domains', domainsRouter);
   app.use('/api/jobs', jobsRouter);
   app.use('/api/users', usersRouter);

@@ -12,7 +12,7 @@ application path of `LocalGames\<name>\<game>.exe`.
 A Linux Flashpoint install. The streamer uses the Infinity build's
 `Server/FlashpointGameServer`, `FPSoftware/Java` and `FPSoftware/Wine`, which
 Ultimate's archives only include for Windows.
-`scripts/setup-flashpoint.sh --with-infinity` adds them without overwriting
+`scripts/setup-flashpoint.sh --infinity` adds them without overwriting
 anything.
 
 ## Running one by hand

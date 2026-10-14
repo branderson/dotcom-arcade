@@ -4,7 +4,15 @@ vi.mock('../utils/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), debug: vi.fn(), warn: vi.fn() },
 }));
 
-const configMock = vi.hoisted(() => ({ config: { appVersion: '1.0.38' as string | null } }));
+const RELEASE_URL = 'https://git.example.com/api/v1/repos/owner/dotcom-arcade/releases/latest';
+const configMock = vi.hoisted(() => ({
+  config: {
+    appVersion: '1.0.38' as string | null,
+    appUpdateUrl: 'https://git.example.com/api/v1/repos/owner/dotcom-arcade/releases/latest' as
+      | string
+      | null,
+  },
+}));
 vi.mock('../config', () => configMock);
 
 vi.mock('axios', () => ({
@@ -20,7 +28,7 @@ function release(tagName: string) {
     data: {
       tag_name: tagName,
       published_at: '2026-08-12T07:11:45Z',
-      html_url: `https://github.com/darkraise/flashpoint-web/releases/tag/${tagName}`,
+      html_url: `https://git.example.com/owner/dotcom-arcade/releases/tag/${tagName}`,
       body: '## Changes since v1.0.37\n\n- feat: something',
     },
   };
@@ -30,6 +38,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   AppUpdateService.clearCache();
   configMock.config.appVersion = '1.0.38';
+  configMock.config.appUpdateUrl = RELEASE_URL;
 });
 
 describe('AppUpdateService.getUpdateInfo', () => {
@@ -105,9 +114,19 @@ describe('AppUpdateService.getUpdateInfo', () => {
     await AppUpdateService.getUpdateInfo();
 
     expect(axios.get).toHaveBeenCalledWith(
-      'https://api.github.com/repos/darkraise/flashpoint-web/releases/latest',
+      RELEASE_URL,
       expect.objectContaining({ timeout: 10000 })
     );
+  });
+
+  it('checks nothing when no release source is configured', async () => {
+    configMock.config.appUpdateUrl = null;
+
+    const info = await AppUpdateService.getUpdateInfo(true);
+
+    expect(axios.get).not.toHaveBeenCalled();
+    expect(info.enabled).toBe(false);
+    expect(info.updateAvailable).toBe(false);
   });
 });
 

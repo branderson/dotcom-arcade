@@ -286,16 +286,7 @@ interface SidebarProps {
 
 ```typescript
 const gameNavItems: NavItem[] = [
-  {
-    path: '/flash-games',
-    iconImage: '/images/Flash.png',
-    label: 'Flash Games',
-  },
-  {
-    path: '/html5-games',
-    iconImage: '/images/HTML5.png',
-    label: 'HTML5 Games',
-  },
+  { path: '/', icon: Home, label: 'Home' },
   { path: '/animations', icon: Film, label: 'Animations' },
   { path: '/browse', icon: Gamepad2, label: 'Browse' },
 ];
@@ -358,11 +349,6 @@ const isNavItemActive = (item: NavItem) => {
     return (
       location.pathname === itemPath && location.search === `?${itemQuery}`
     );
-  }
-
-  // Special case: Home (/) should highlight Flash Games
-  if (location.pathname === '/' && itemPath === '/flash-games') {
-    return true;
   }
 
   return location.pathname === itemPath;

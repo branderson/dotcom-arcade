@@ -38,6 +38,8 @@ export interface AssetDownloadProgress {
 }
 
 export interface AppUpdateInfo {
+  /** False when the server has no release source configured */
+  enabled: boolean;
   currentVersion: string | null;
   latestVersion: string | null;
   updateAvailable: boolean;

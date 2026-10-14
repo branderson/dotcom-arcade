@@ -202,7 +202,6 @@ Default: 100 requests per 15 minutes. Headers: `X-RateLimit-Limit`,
 - [GET /api/metrics/summary](./admin-api.md#get-metrics-summary)
 - [GET /api/metrics/endpoints](./admin-api.md#get-endpoint-metrics)
 - [GET /api/jobs](./admin-api.md#list-all-jobs)
-- [GET /api/github/stars](./admin-api.md#get-github-star-count)
 - [GET /api/settings/auth](./admin-api.md#get-auth-settings)
 - [PATCH /api/settings/auth](./admin-api.md#update-auth-settings)
 - [GET /game-files/\*](./admin-api.md#get-game-file)

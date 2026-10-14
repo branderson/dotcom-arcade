@@ -154,7 +154,6 @@ export const handlers = [
       app: {
         maintenance_mode: false,
         allow_registration: true,
-        homeRecentHours: 24,
       },
       metadata: {
         flashpointEdition: 'infinity',

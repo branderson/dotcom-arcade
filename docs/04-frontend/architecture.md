@@ -205,9 +205,9 @@ Routes are defined in `App.tsx` with nested routing structure:
     <AppShell>
       <Routes>
         {/* Public routes */}
-        <Route path="/flash-games" element={
+        <Route path="/browse" element={
           <ProtectedRoute requireAuth={false}>
-            <FlashGamesView />
+            <BrowseView />
           </ProtectedRoute>
         } />
 
