@@ -37,8 +37,18 @@ Starting the original Flash Player adds the game's Ruffle saves to the files the
 stream starts with. While it plays, its saves are copied back into Ruffle's
 storage as they change. Saves made with a `localPath` of `/` are shared by
 every game in Ruffle, so only those seen changing while this game ran are
-carried over. The first time a game switches, a save that exists in both places
-from before this keeps the streamed copy; after that the two stay in step.
+carried over.
+
+Ruffle's copy of a save is kept up to date in both directions, so it's the one
+the stream starts with:
+
+- Before Ruffle starts a game, it's given any of the stream's saves it doesn't
+  have yet, such as progress made only in the stream. The game then loads that
+  progress instead of starting a fresh save, which would otherwise replace the
+  stream's progress on the next switch. Saves Ruffle already has are left alone.
+- While the stream plays, its saves are copied into Ruffle as they change.
+
+A stream save replaced this way is still in the account's backups.
 
 ## Sync
 

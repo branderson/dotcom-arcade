@@ -1,5 +1,5 @@
 import { loadSyncState } from './gameSaves';
-import type { SaveFiles } from '@/lib/streamSaves';
+import { loadSaves, type SaveFiles } from '@/lib/streamSaves';
 
 /**
  * Ruffle and the original Flash Player (streamed) store SharedObjects in the
@@ -20,8 +20,6 @@ const SHARED_OBJECTS = 'Flash_Player/#SharedObjects/';
 const DEFAULT_FOLDER = 'DOTCOMAR';
 /** Every .sol file starts with the bytes 00 BF 00, which base64-encode to "AL8" */
 const SOL_PREFIX = 'AL8';
-/** Games whose saves have been brought together once already */
-const LINKED_KEY = 'flashpoint-flash-saves-linked';
 
 export interface FlashSaveContext {
   /** Host Ruffle keys saves by: the site's own */
@@ -103,19 +101,11 @@ function readLocalStorage(): Record<string, string> {
   return entries;
 }
 
-function linkedGames(): Set<string> {
-  try {
-    return new Set(JSON.parse(localStorage.getItem(LINKED_KEY) ?? '[]') as string[]);
-  } catch {
-    return new Set();
-  }
-}
-
 /**
- * The save files to start a streamed Flash game with: its stream saves plus its
- * Ruffle saves. Ruffle's copy wins, being kept up to date with the stream's;
- * the first time a game is linked, saves from before that are left as the
- * stream had them.
+ * The save files to start a streamed Flash game with: its stream saves, with
+ * its Ruffle saves on top. Ruffle is where a game is usually played, and the
+ * stream's own changes are copied back into Ruffle as they happen, so Ruffle's
+ * copy is the latest.
  */
 export async function withRuffleSaves(
   gameId: string,
@@ -123,25 +113,31 @@ export async function withRuffleSaves(
   context: FlashSaveContext
 ): Promise<SaveFiles> {
   const { keys } = await loadSyncState(gameId);
-  const fromRuffle = ruffleToFlash(
-    readLocalStorage(),
-    context,
-    new Set(keys),
-    sharedObjectsFolder(files)
-  );
-  const linked = linkedGames();
-  if (linked.has(gameId)) {
-    return { ...files, ...fromRuffle };
-  }
-  linked.add(gameId);
-  localStorage.setItem(LINKED_KEY, JSON.stringify([...linked]));
-  return { ...fromRuffle, ...files };
+  return {
+    ...files,
+    ...ruffleToFlash(readLocalStorage(), context, new Set(keys), sharedObjectsFolder(files)),
+  };
 }
 
 /** Copies a streamed game's Flash Player saves into Ruffle's storage. */
 export function mirrorToRuffle(files: SaveFiles, context: FlashSaveContext): void {
   for (const [key, value] of Object.entries(flashToRuffle(files, context))) {
     if (localStorage.getItem(key) !== value) {
+      localStorage.setItem(key, value);
+    }
+  }
+}
+
+/**
+ * Before Ruffle plays a game, gives it the streamed Flash Player's saves it
+ * doesn't have yet, so progress made only in the stream isn't started over.
+ * Saves Ruffle already has are left alone.
+ */
+export async function addStreamSavesToRuffle(gameId: string, swfUrl: string): Promise<void> {
+  const context = flashSaveContext(swfUrl, window.location.hostname);
+  if (!context) return;
+  for (const [key, value] of Object.entries(flashToRuffle(await loadSaves(gameId), context))) {
+    if (localStorage.getItem(key) === null) {
       localStorage.setItem(key, value);
     }
   }

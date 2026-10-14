@@ -17,14 +17,15 @@ const flashGame = {
 describe('GamePlayer player choice', () => {
   it('switches a streamable Flash game between Ruffle and the original Flash Player', async () => {
     render(<GamePlayer {...flashGame} streamable />);
-    expect(screen.getByText('ruffle')).toBeInTheDocument();
+    // Ruffle starts once any streamed saves have been handed to it
+    expect(await screen.findByText('ruffle')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Use original Flash Player' }));
     expect(screen.getByText('stream')).toBeInTheDocument();
     expect(screen.queryByText('ruffle')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Use Ruffle' }));
-    expect(screen.getByText('ruffle')).toBeInTheDocument();
+    expect(await screen.findByText('ruffle')).toBeInTheDocument();
   });
 
   it('offers no choice when the game cannot be streamed', () => {

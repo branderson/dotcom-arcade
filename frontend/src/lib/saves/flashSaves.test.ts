@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
+  addStreamSavesToRuffle,
   flashSaveContext,
   flashToRuffle,
   mirrorToRuffle,
@@ -8,6 +9,8 @@ import {
 } from './flashSaves';
 
 const syncState = vi.hoisted(() => ({ keys: [] as string[] }));
+const streamSaves = vi.hoisted(() => ({ files: {} as Record<string, string> }));
+vi.mock('@/lib/streamSaves', () => ({ loadSaves: async () => streamSaves.files }));
 vi.mock('./gameSaves', () => ({
   loadSyncState: async (gameId: string) => ({
     gameId,
@@ -36,6 +39,7 @@ if (!context) throw new Error('expected a context');
 beforeEach(() => {
   localStorage.clear();
   syncState.keys = [];
+  streamSaves.files = {};
 });
 
 describe('flash save names', () => {
@@ -80,16 +84,32 @@ describe('carrying saves between players', () => {
     });
   });
 
-  it("keeps the stream's copy the first time, then prefers Ruffle's", async () => {
+  it("replaces the stream's copy of a save with Ruffle's, in the stream's folder", async () => {
     localStorage.setItem(PATH_KEY, PATH_SOL);
-    const streamCopy = { [PATH_FILE]: 'AL8streamcopy' };
-    expect(await withRuffleSaves('game', streamCopy, context)).toEqual(streamCopy);
-    expect(await withRuffleSaves('game', streamCopy, context)).toEqual({ [PATH_FILE]: PATH_SOL });
+    const streamCopy = { [PATH_FILE]: 'AL8stalecopy', [ROOT_FILE]: ROOT_SOL };
+    expect(await withRuffleSaves('game', streamCopy, context)).toEqual({
+      [PATH_FILE]: PATH_SOL,
+      [ROOT_FILE]: ROOT_SOL,
+    });
   });
 
   it("copies the stream's saves into Ruffle's storage", () => {
     mirrorToRuffle({ [PATH_FILE]: PATH_SOL, [ROOT_FILE]: ROOT_SOL }, context);
     expect(localStorage.getItem(PATH_KEY)).toBe(PATH_SOL);
     expect(localStorage.getItem(ROOT_KEY)).toBe(ROOT_SOL);
+  });
+
+  it('gives Ruffle the stream-only saves before it starts, keeping its own', async () => {
+    window.history.replaceState(null, '', '/browse/game');
+    const host = window.location.hostname;
+    streamSaves.files = { [PATH_FILE]: PATH_SOL, [ROOT_FILE]: ROOT_SOL };
+    localStorage.setItem(`${host}//rootsave`, 'AL8ruffleprogress');
+
+    await addStreamSavesToRuffle('game', '/game-proxy/http://savetest.example/dir/test.swf');
+
+    expect(
+      localStorage.getItem(`${host}/game-proxy/http://savetest.example/dir/test.swf/pathsave`)
+    ).toBe(PATH_SOL);
+    expect(localStorage.getItem(`${host}//rootsave`)).toBe('AL8ruffleprogress');
   });
 });
