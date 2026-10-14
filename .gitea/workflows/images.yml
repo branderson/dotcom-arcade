@@ -2,7 +2,9 @@
 # Gitea instance's container registry, under the repository's owner.
 #
 # Needs a repository secret REGISTRY_TOKEN: an access token with package write
-# access, belonging to the repository's owner.
+# access, belonging to the repository's owner. If the runner reaches Gitea at a
+# different address than the registry's public one, set a repository variable
+# REGISTRY_HOST to the registry's host name.
 name: Images
 
 on:
@@ -33,12 +35,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The registry lives on the same host as this Gitea instance
+      # The runner mounts the host's Docker socket, but its job image ships no
+      # Docker client, and the login and build actions shell out to `docker`.
+      # Only Docker's repository is refreshed, so the job needs no other mirrors.
+      - name: Install the Docker CLI
+        run: |
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+          chmod a+r /etc/apt/keyrings/docker.asc
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
+          apt-get update -o Dir::Etc::sourcelist=sources.list.d/docker.list -o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=0
+          apt-get install -y --no-install-recommends docker-ce-cli
+
+      # The registry is this Gitea instance, unless REGISTRY_HOST says otherwise
       - name: Locate the registry
         id: registry
+        shell: bash
+        env:
+          REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
         run: |
           host=${GITHUB_SERVER_URL#*://}
-          echo "host=${host%/}" >> "$GITHUB_OUTPUT"
+          host=${REGISTRY_HOST:-${host%/}}
+          echo "host=$host" >> "$GITHUB_OUTPUT"
           echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3

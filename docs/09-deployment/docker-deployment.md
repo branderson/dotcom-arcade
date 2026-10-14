@@ -47,7 +47,9 @@ owner. Pushes to `main` publish a `main` tag; `v1.2.3` tags publish `1.2.3`,
 `dejima-privileged`; jobs that don't build images should use `dejima-confined`.
 It also needs a repository secret, `REGISTRY_TOKEN`: an access token with
 package write access, belonging to the repository's owner, whom the workflow
-logs in as.
+logs in as. If the runner reaches Gitea at a different address than the
+registry's public one, set a repository variable `REGISTRY_HOST` to the
+registry's host name.
 
 ## Volumes
 
