@@ -1,7 +1,7 @@
 # Backend Configuration
 
 This document describes all environment variables and configuration options for
-the Flashpoint Web backend service.
+the Dotcom Arcade backend service.
 
 ## Configuration File
 

@@ -1,7 +1,7 @@
 # Development Documentation
 
 This directory contains comprehensive documentation for developers working on
-the Flashpoint Web application.
+the Dotcom Arcade application.
 
 ## Contents
 

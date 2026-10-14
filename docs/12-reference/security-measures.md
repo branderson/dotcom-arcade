@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document catalogs all security measures implemented in the Flashpoint Web
+This document catalogs all security measures implemented in the Dotcom Arcade
 application, addressing OWASP Top 10 vulnerabilities and security best
 practices.
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Flashpoint Web uses JWT-based authentication with role-based access control
+Dotcom Arcade uses JWT-based authentication with role-based access control
 (RBAC).
 
 ## Authentication Architecture

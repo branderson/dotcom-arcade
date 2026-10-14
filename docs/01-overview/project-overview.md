@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Flashpoint Web is a self-hosted web application designed to browse and play
+Dotcom Arcade is a self-hosted web application designed to browse and play
 games from the Flashpoint Archive. It provides a modern, user-friendly interface
 to access thousands of preserved Flash games, HTML5 games, and animations from
 the early web era.
@@ -14,9 +14,9 @@ dedicated to saving games and animations from the web. With Adobe Flash Player's
 end-of-life in December 2020, millions of Flash games and animations became
 unplayable. Flashpoint preserves these games and provides tools to play them.
 
-## What is Flashpoint Web?
+## What is Dotcom Arcade?
 
-Flashpoint Web is a **web-based alternative** to the Flashpoint Launcher,
+Dotcom Arcade is a **web-based alternative** to the Flashpoint Launcher,
 offering:
 
 - **Browser-based access** to your local Flashpoint collection
@@ -65,7 +65,7 @@ offering:
 
 ## Architecture Highlights
 
-Flashpoint Web consists of two independent services:
+Dotcom Arcade consists of two independent services:
 
 1. **Backend (Port 3100)** - REST API server handling game metadata, user
    management, authentication, and game file serving
@@ -127,7 +127,7 @@ This separation allows:
 
 ## Comparison with Flashpoint Launcher
 
-| Feature        | Flashpoint Launcher           | Flashpoint Web                  |
+| Feature        | Flashpoint Launcher           | Dotcom Arcade                  |
 | -------------- | ----------------------------- | ------------------------------- |
 | Platform       | Desktop (Windows, Linux, Mac) | Web browser                     |
 | Interface      | Desktop application           | Web application                 |
@@ -141,7 +141,7 @@ This separation allows:
 
 ## License
 
-Flashpoint Web is open-source software. (Note: Add appropriate license
+Dotcom Arcade is open-source software. (Note: Add appropriate license
 information)
 
 ## Credits

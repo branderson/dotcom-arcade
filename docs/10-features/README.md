@@ -29,6 +29,12 @@ Web application.
     during system updates while allowing admin access
 12. [Discovery Portal](./12-discovery-portal.md) - Arcade portal layout, color
     schemes, discovery homepage and mature content filtering
+13. [Streaming](./13-streaming.md) - Java, Shockwave and original Flash Player
+    games streamed from the server, one container per player
+14. [Proxy Sign-In](./14-proxy-sign-in.md) - Sign users in through Authentik,
+    Authelia, oauth2-proxy and other forward-auth proxies
+15. [Game Saves](./15-game-saves.md) - Saves kept on the player's account, with
+    backups to restore
 
 ## Quick Reference
 

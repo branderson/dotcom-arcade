@@ -1,6 +1,6 @@
 # API Reference Documentation
 
-Complete REST API reference for Flashpoint Web backend service.
+Complete REST API reference for Dotcom Arcade backend service.
 
 ## Base URL
 
@@ -227,5 +227,4 @@ Default: 100 requests per 15 minutes. Headers: `X-RateLimit-Limit`,
 
 ## Support
 
-For issues: [GitHub Issues](https://github.com/darkraise/flashpoint-web/issues)
 Documentation: [docs/README.md](../README.md)

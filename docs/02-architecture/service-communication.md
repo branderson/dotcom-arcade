@@ -2,7 +2,7 @@
 
 ## Overview
 
-Flashpoint Web uses HTTP-based communication between two services. Frontend
+Dotcom Arcade uses HTTP-based communication between two services. Frontend
 communicates with backend via REST API. The backend handles both business logic
 and game file serving through integrated routes.
 

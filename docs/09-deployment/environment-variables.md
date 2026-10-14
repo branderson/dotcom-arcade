@@ -1,6 +1,6 @@
 # Environment Variables
 
-Configuration reference for all Flashpoint Web services.
+Configuration reference for all Dotcom Arcade services.
 
 ## Backend Variables
 
@@ -118,20 +118,18 @@ and API share one origin.
 
 **Streaming:**
 
-Games that can't run in a browser, such as Java applets, can be streamed from a
-server-side container by a separate session manager (flashpoint-ultimate-server).
-The backend asks it which games are streamable and starts sessions for players.
-Browsers reach each stream at `/stream/<id>/` on this site, so the reverse proxy
-in front of flashpoint-web must route `/stream/` to the session manager,
-including WebSocket upgrades. Saves for streamed games are kept in each
-browser's IndexedDB.
+Games that can't run in a browser, such as Java applets and Shockwave, can be
+streamed by the session manager under `streaming/`. It runs under the
+`streaming` compose profile. See [Streaming](../10-features/13-streaming.md).
 
-| Variable              | Default | Description                                                            |
-| --------------------- | ------- | ---------------------------------------------------------------------- |
-| `STREAMING_API_URL`   | -       | Session manager's internal API, e.g. `http://flashpoint-session-manager:8080` |
-| `STREAMING_API_TOKEN` | -       | Token the session manager expects. Streaming is off unless both are set |
+| Variable              | Default                       | Description                                                     |
+| --------------------- | ----------------------------- | --------------------------------------------------------------- |
+| `STREAMING_API_URL`   | `http://session-manager:8080` | Session manager's internal API                                  |
+| `STREAMING_API_TOKEN` | -                             | Token shared with the session manager. Streaming is off without it |
 
 **Trusted Header Login:**
+
+See also [Proxy Sign-In](../10-features/14-proxy-sign-in.md).
 
 When a reverse proxy such as Authentik (forward auth) authenticates users in
 front of flashpoint-web, it can pass the signed-in username in a header so

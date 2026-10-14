@@ -1,238 +1,161 @@
-# Flashpoint Web
+# Dotcom Arcade
 
-<div align="center">
+**Your own Flash-era game portal, powered by
+[Flashpoint Ultimate](https://flashpointarchive.org/).**
 
-**A modern web interface for the Flashpoint Archive**
+Dotcom Arcade serves a [Flashpoint Ultimate](https://flashpointarchive.org/)
+collection as a website you'd have played at a friend's house or in the computer
+lab, with modern UX. It aims to play as much of the archive as possible in any
+browser: Flash and HTML5 run in the page, and Java, Shockwave and the original
+Flash Player stream from your server.
 
-Browse and play 200,000+ preserved Flash games and animations directly in your
-browser.
+![The Dotcom Arcade homepage](docs/images/home.png)
 
-<!-- Tech Stack Badges -->
-<p>
-  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
-  <img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
-  <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
-  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+> [!NOTE]
+>
+> Dotcom Arcade is an unofficial community project, not affiliated with
+> Flashpoint Archive. It's built on
+> [flashpoint-web](https://github.com/darkraise/flashpoint-web) by darkraise.
+
+## Features
+
+- **Plays almost everything.**
+  - Flash runs in [Ruffle](https://ruffle.rs/) and HTML5 runs natively.
+  - Games no browser can run stream from the server into the page, each player
+    in their own container: Java applets, Shockwave and Director games, and
+    Flash games that need the real Flash Player. With streaming on, any Flash
+    game can switch to the original Flash Player.
+- **An arcade, not a file browser.** A portal-style layout with genre categories
+  and glossy tiles, and color schemes defined as data, so new themes are easy to
+  add.
+- **Discovery first.** The homepage offers:
+  - a Game of the Day;
+  - a Time Machine of games released in any week, with a date picker;
+  - shelves from Flashpoint's curated playlists;
+  - your recently played games.
+
+  Browse lists default to a shuffle, not A to Z.
+
+- **One page per game.** It has a click-to-play stage, details and tags, and
+  related games ranked by shared tags, series and developer.
+- **Accounts and saves.**
+  - Multi-user, with roles.
+  - Favorites, playlists and play tracking.
+  - Game saves follow you between browsers, with the last 10 kept as backups.
+- **Sign in through your proxy.** Authentik, Authelia, oauth2-proxy and similar
+  forward-auth proxies can sign users in.
+- **Mature content filter.** Adult and extreme content is hidden unless a user
+  opts in.
+
+<p align="center">
+  <img src="docs/images/game.png" alt="A game page" width="49%" />
+  <img src="docs/images/playing.png" alt="Playing a game in the page" width="49%" />
 </p>
 
-<!-- Project Badges -->
-<p>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square" alt="License" /></a>
-  <img src="https://img.shields.io/badge/Node.js-20%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js 20+" />
-  <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square" alt="PRs Welcome" />
-</p>
+## Getting started
 
-</div>
+You need a Linux server with Docker, and enough disk for Flashpoint Ultimate:
+about 2.3 TB for version 14, or 4.6 TB if you keep the downloaded archives to
+seed. Expect the download and extraction to take a day or more.
 
----
+### 1. Get Flashpoint Ultimate
 
-> [!IMPORTANT]
->
-> **Already running 1.0.31 or earlier? Updating is a breaking change.** The
-> separate `flashpoint-backend` and `flashpoint-frontend` containers were
-> replaced in 1.0.32 by a single `darkraise/flashpoint-web` image, and the old
-> images are no longer published. Your compose file and `.env` both need changes
-> — see **[Upgrading](#upgrading)** before you pull.
+[`scripts/setup-flashpoint.sh`](scripts/setup-flashpoint.sh) downloads the
+torrent with `aria2c` and then extracts each archive in turn. It checks free
+space before each one and deletes it afterwards, so the disk never needs room
+for both. It also pulls the database, settings and playlists out of
+`Base_1.zip`, which otherwise only holds Windows software. Re-run it to resume
+after an interruption.
 
-## What is Flashpoint Web?
-
-Flashpoint Web is a self-hosted web application for accessing your local
-[Flashpoint Archive](https://flashpointarchive.org/) collection. It provides a
-modern, browser-based alternative to the Flashpoint Launcher with multi-user
-support, play tracking, and an intuitive interface.
-
-### Key Features
-
-- **Browse & Search** - Fast search across 200,000+ games with advanced
-  filtering by platform, developer, tags, and more
-- **Downloaded View** - A dedicated page and filter for games whose data is
-  already on disk, so a curated collection is one click away
-- **Play in Browser** - Flash games via [Ruffle](https://ruffle.rs/) emulator,
-  HTML5 games natively
-- **Multi-User Support** - Individual accounts with role-based permissions
-  (admin, moderator, user, guest)
-- **Play Tracking** - Track playtime, completion status, and view play
-  statistics
-- **Playlists & Favorites** - Organize your game collection with custom
-  playlists
-- **22 Theme Palettes** - Customizable dark/light modes with multiple color
-  schemes
-- **Responsive Design** - Works on desktop and mobile devices
-- **Database Hot-Reload** - Automatically syncs when Flashpoint Launcher updates
-  metadata
-
-## Demo: [flash.quangtc.dev](https://flash.quangtc.dev)
-Register new account and try your favorite flash games
-
-## Upgrading
-
-Routine updates need nothing beyond
-`docker compose pull && docker compose up -d`.
-
-> [!WARNING]
->
-> **Coming from 1.0.31 or earlier, that is not enough.** 1.0.32 replaced the
-> two-container deployment with a single image, so an existing setup needs:
->
-> - a new `docker-compose.yml` with one `flashpoint-web` service, mapping
->   `WEB_PORT` to container port `3100`
-> - `API_PORT`, `BACKEND_HOST`, and `BACKEND_PORT` removed from `.env` — they no
->   longer do anything
-> - a reverse proxy pointing at one upstream instead of two; any rule sending
->   `/api` to port 3100 will break
-> - the Flashpoint mount switched to read-write, or the Downloaded page stays
->   empty
->
-> Accounts, playlists, and play history are preserved.
-
-Full migration steps, every environment variable added, removed, or changed, and
-per-version release notes are in the
-**[Upgrade Guide](docs/09-deployment/upgrade-guide.md)**.
-
-## Getting Started
-
-### Prerequisites
-
-- [Docker](https://docs.docker.com/get-docker/) and
-  [Docker Compose](https://docs.docker.com/compose/install/)
-- [Flashpoint Archive](https://flashpointarchive.org/) installed locally
-
-### 1. Create a project directory
-
-```bash
-mkdir flashpoint-web && cd flashpoint-web
+```sh
+sudo apt install aria2 7zip tmux
+tmux new -s flashpoint
+scripts/setup-flashpoint.sh --with-infinity /srv/flashpoint
 ```
 
-### 2. Create `docker-compose.yml`
+`--with-infinity` adds Flashpoint Infinity for Linux's software, which streaming
+needs. `--keep-archives` keeps the archives so you can keep seeding.
 
-<!-- prettier-ignore -->
-```yaml
-services:
-  flashpoint-web:
-    image: darkraise/flashpoint-web:${IMAGE_TAG:-latest}
-    container_name: flashpoint-web
-    restart: unless-stopped
-    ports:
-      - "${WEB_PORT:-80}:3100"
-    volumes:
-      - ${FLASHPOINT_HOST_PATH:?FLASHPOINT_HOST_PATH is required}:/data/flashpoint
-      - ${DATA_PATH:-./data}:/app/data
-      - ${LOGS_PATH:-./logs}:/app/logs
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - NODE_ENV=production
-      - TZ=${TZ:-UTC}
-      - DOMAIN=${DOMAIN:-http://localhost:${WEB_PORT:-80}}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
-      - ENABLE_LOCAL_DB_COPY=${ENABLE_LOCAL_DB_COPY:-false}
-      - SQLITE_CACHE_SIZE=${SQLITE_CACHE_SIZE:--64000}
-      - SQLITE_MMAP_SIZE=${SQLITE_MMAP_SIZE:-268435456}
-      - ENABLE_CACHE_PREWARM=${ENABLE_CACHE_PREWARM:-true}
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:3100/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+### 2. Configure
+
+```sh
+cp .env.example .env
 ```
 
-The Flashpoint directory is mounted read-write: the app records which games are
-downloaded in `flashpoint.sqlite` and saves downloaded game data under
-`Data/Games`. Mount it read-only and browsing still works, but downloads and the
-Downloaded page do not.
+Set at least these:
 
-### 3. Create `.env`
-
-Two values are required. This is a complete, working `.env`:
-
-```env
-FLASHPOINT_HOST_PATH=/srv/Flashpoint
-JWT_SECRET=paste-the-output-of-openssl-rand-hex-32-here
+```sh
+FLASHPOINT_HOST_PATH=/srv/flashpoint
+JWT_SECRET=<output of: openssl rand -hex 32>
+PUID=1000                             # your user, from `id -u` and `id -g`
+PGID=1000
 ```
 
-Generate the secret with `openssl rand -hex 32`. Everything else has a working
-default; add only what you need:
+### 3. Start
 
-```env
-# WEB_PORT=8080            # Host port for the app (UI + API) (default: 80)
-# PUID=1000                # Host user ID (Linux — run 'id -u')
-# PGID=1000                # Host group ID (Linux — run 'id -g')
-# LOG_LEVEL=info           # debug, info, warn, error
-# TZ=UTC                   # Timezone
-# DATA_PATH=./data         # Persistent app data
-# LOGS_PATH=./logs         # Log files
-
-# Extra allowed origins, comma-separated. Not needed for a normal install:
-# same-origin requests are always allowed. Set this only when the UI is served
-# from a different origin, or behind a proxy that rewrites the Host header.
-# DOMAIN=http://192.168.0.10,https://flashpoint.example.com
-
-# Database performance (network storage / large collections)
-# ENABLE_LOCAL_DB_COPY=false       # Copy flashpoint.sqlite to local storage
-# SQLITE_CACHE_SIZE=-64000         # SQLite cache in KB (64MB default)
-# SQLITE_MMAP_SIZE=268435456       # Memory-mapped I/O in bytes (256MB default)
-# ENABLE_CACHE_PREWARM=true        # Pre-warm common queries on startup
+```sh
+docker compose up -d --build
 ```
 
-### 4. Start it
+Open `http://<server>/` and create the admin account. On first start the app
+indexes the collection, which takes a few minutes on a full Ultimate install.
+Under **Settings → App** you can set the site name and tagline.
 
-```bash
-docker compose up -d
-```
+### 4. Optional: streaming
 
-Open **http://localhost** in your browser. The first user to register
-automatically becomes the **admin**.
+Streaming plays the games browsers can't. To turn it on:
 
-A single container serves both the UI and the API on one port — `WEB_PORT` on
-the host, 3100 inside the container.
+1. Run the setup script with `--with-infinity`.
+2. Add to `.env`:
 
-### Common Commands
+   ```sh
+   COMPOSE_PROFILES=streaming
+   STREAMING_API_TOKEN=<output of: openssl rand -hex 32>
+   ```
 
-```bash
-docker compose up -d                         # Start
-docker compose down                          # Stop
-docker compose logs -f                       # Follow logs
-docker compose restart                       # Restart
-docker compose pull && docker compose up -d  # Update to the latest image
+3. Rebuild with `docker compose up -d --build`.
+4. Route `/stream/` on your site to the session manager (port 8081). Streams
+   need HTTPS. See the [streaming guide](docs/10-features/13-streaming.md) for
+   an nginx example.
+
+The session manager starts containers through the Docker socket, which amounts
+to root on the host. Keep it off the public internet. Only `/stream/` needs to
+be reachable, and only through your proxy.
+
+### Signing in through a reverse proxy
+
+If your site sits behind Authentik, Authelia or another forward-auth proxy, the
+app can trust the username it passes along. See
+[proxy sign-in](docs/10-features/14-proxy-sign-in.md).
+
+## Updating
+
+```sh
+git pull
+docker compose up -d --build
 ```
 
 ## Documentation
 
-For architecture details, API reference, development setup, contributing
-guidelines, and more, visit the
-**[Wiki](https://github.com/darkraise/flashpoint-web/wiki)**.
+The [docs](docs/README.md) cover features, deployment, configuration, the API
+and development. Useful starting points:
 
-## Related Projects
+- [Environment variables](docs/09-deployment/environment-variables.md)
+- [Discovery portal](docs/10-features/12-discovery-portal.md)
+- [Streaming](docs/10-features/13-streaming.md) and
+  [streaming internals](streaming/README.md)
+- [Development setup](docs/08-development/setup-guide.md)
 
-- [Flashpoint Archive](https://flashpointarchive.org/) - The game preservation
-  project
-- [Flashpoint Launcher](https://github.com/FlashpointProject/launcher) -
-  Official desktop launcher
-- [Ruffle](https://ruffle.rs/) - Flash Player emulator
+## Credits
+
+- [Flashpoint Archive](https://flashpointarchive.org/), for preserving web games
+  and animations, and for the curated playlists the homepage draws on.
+- [flashpoint-web](https://github.com/darkraise/flashpoint-web) by darkraise,
+  which this project is built on.
+- [Ruffle](https://ruffle.rs/), for running Flash in modern browsers.
+- [Selkies](https://github.com/selkies-project/selkies), which streams the
+  games.
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 - see the
-[LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- **Flashpoint Team** - For preserving web gaming history
-- **Ruffle Contributors** - For making Flash playable in modern browsers
-- **Community** - For testing, feedback, and contributions
-
----
-
-<div align="center">
-
-**[Wiki](https://github.com/darkraise/flashpoint-web/wiki)** |
-**[Report Bug](https://github.com/darkraise/flashpoint-web/issues)** |
-**[Request Feature](https://github.com/darkraise/flashpoint-web/issues)**
-
-</div>
+GPL-3.0, like flashpoint-web. See [LICENSE](LICENSE).

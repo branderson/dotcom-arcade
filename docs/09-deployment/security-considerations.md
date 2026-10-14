@@ -1,6 +1,6 @@
 # Security Considerations
 
-Production deployment security checklist for Flashpoint Web.
+Production deployment security checklist for Dotcom Arcade.
 
 ## Pre-Production Checklist
 

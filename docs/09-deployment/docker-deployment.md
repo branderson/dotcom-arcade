@@ -1,242 +1,83 @@
 # Docker Deployment
 
-Deploy Flashpoint Web using Docker Compose.
+Deploy Dotcom Arcade with Docker Compose. The [README](../../README.md#getting-started)
+walks through a first install; this page covers the details.
 
 ## Prerequisites
 
-- Docker Engine 20.10+
-- Docker Compose 2.0+
-- 4GB+ RAM, 50GB+ disk space
-- Flashpoint installation with:
-  - `Data/flashpoint.sqlite`
-  - `Data/Games/`
-  - `Data/Images/`
-  - `Legacy/htdocs/`
+- **Docker:** Engine 24+ with the Compose plugin.
+- **Memory:** 4 GB of RAM. With streaming, allow about 1 GB more per concurrent
+  stream, since each streamer container gets 1 GB of shared memory.
+- **A Flashpoint install** at `FLASHPOINT_HOST_PATH`, with
+  `Data/flashpoint.sqlite`, `Data/Games/`, `Data/Images/`, `Data/Playlists/`
+  and `Legacy/htdocs/`. `scripts/setup-flashpoint.sh` produces one from the
+  Flashpoint Ultimate torrent.
 
-## Quick Start
+## Services
 
-1. Set Flashpoint path:
+| Service           | Image                          | Profile     | Purpose                                                  |
+| ----------------- | ------------------------------ | ----------- | -------------------------------------------------------- |
+| `app`             | `dotcom-arcade`                | (always)    | UI, API and game content on port 3100                    |
+| `session-manager` | `dotcom-arcade-session-manager` | `streaming` | Starts streamer containers; serves `/stream/` on port 8081 |
+| `streamer`        | `dotcom-arcade-streamer`       | `streaming` | Built only; the session manager runs one per player      |
 
-```bash
-# Linux/Mac
-export FLASHPOINT_HOST_PATH=/path/to/flashpoint
+All three are built from this repository by `docker compose up -d --build`.
 
-# Windows PowerShell
-$env:FLASHPOINT_HOST_PATH="D:\Flashpoint"
+## Volumes
+
+| Host                    | Container          | Purpose                                                              |
+| ----------------------- | ------------------ | -------------------------------------------------------------------- |
+| `FLASHPOINT_HOST_PATH`  | `/data/flashpoint` | The Flashpoint install. Read-write: downloaded game data and download state are recorded there |
+| `DATA_PATH` (`./data`)  | `/app/data`        | `user.db` and the installed Ruffle. Back this up                     |
+| `LOGS_PATH` (`./logs`)  | `/app/logs`        | Log files                                                            |
+
+The session manager mounts the Flashpoint install read-only and the Docker
+socket, and passes `FLASHPOINT_HOST_PATH` on to the streamer containers.
+
+## Ports and networks
+
+- **App:** listens on `WEB_PORT` (default 80) on the host.
+- **Session manager:** serves `/stream/` on `STREAM_PORT` (default 8081).
+- **`dotcom-arcade` network:** the app and the session manager share it.
+- **`dotcom-arcade-streams` network:** holds the streamer containers. It's
+  internal, so they have no internet access and only the session manager can
+  reach them.
+
+Put a reverse proxy with HTTPS in front of the app. Streaming needs HTTPS, and
+the proxy must route `/stream/` to the session manager (see
+[Streaming](../10-features/13-streaming.md#reverse-proxy)).
+
+## Health checks
+
+The app reports `starting` at `/health` until its database copy and cache
+pre-warm finish, which can take minutes on network storage. The compose file
+allows 5 minutes before counting failures.
+
+```sh
+docker compose ps
+docker inspect dotcom-arcade --format '{{json .State.Health}}'
 ```
 
-2. Start services:
+## Logs
 
-```bash
-docker-compose up -d --build
-```
-
-3. Access:
-
-- Frontend: http://localhost
-- Backend API: http://localhost:3100
-
-## Container Architecture
-
-| Service  | Image                      | Port | Purpose                           |
-| -------- | -------------------------- | ---- | --------------------------------- |
-| backend  | flashpoint-backend:latest  | 3100 | REST API (includes game service)  |
-| frontend | flashpoint-frontend:latest | 80   | Web UI (Nginx)                    |
-
-**Resource Recommendations:**
-
-- Backend: 2 CPUs, 2GB RAM (includes game service)
-- Frontend: 0.5 CPU, 256MB RAM
-
-## Volume Configuration
-
-**Flashpoint Data (read-write):**
-
-```yaml
-volumes:
-  - ${FLASHPOINT_HOST_PATH}:/data/flashpoint
-```
-
-**User Database (persistent):**
-
-```yaml
-volumes:
-  - user-db:/app/data
-```
-
-## Network Configuration
-
-**Port Mappings:**
-
-| Service  | Internal | Host | Notes |
-| -------- | -------- | ---- | ----- |
-| Frontend | 8080     | 80   | Nginx |
-| Backend  | 3100     | 3100 | API   |
-
-**Custom ports** via environment variables:
-
-```bash
-export WEB_PORT=8080
-export API_PORT=8001
-export FLASHPOINT_HOST_PATH=/path/to/flashpoint
-docker-compose up -d
-```
-
-## Health Checks
-
-All services include health checks:
-
-```yaml
-healthcheck:
-  test:
-    [
-      'CMD',
-      'wget',
-      '--quiet',
-      '--tries=1',
-      '--spider',
-      'http://localhost:3100/api/health',
-    ]
-  interval: 30s
-  timeout: 10s
-  retries: 3
-  start_period: 40s
-```
-
-Check status:
-
-```bash
-docker-compose ps
-```
-
-## Nginx Configuration
-
-The frontend uses a template-based configuration with environment variable
-substitution.
-
-**Key files:**
-
-- `frontend/.nginx/nginx.conf` - Global settings (worker processes, logging)
-- `frontend/.nginx/default.conf.template` - Server block with `${BACKEND_HOST}`,
-  `${BACKEND_PORT}` variables
-
-**At runtime:**
-
-1. Docker entrypoint runs `envsubst` to substitute variables
-2. Processed config written to `/etc/nginx/conf.d/default.conf`
-3. Nginx starts with final configuration
-
-**Features:**
-
-- SPA routing (serves index.html for non-static routes)
-- Gzip compression
-- Security headers (HSTS, CSP, X-Frame-Options)
-- Static asset caching (1 year for versioned assets, no-cache for HTML)
-
-## Running Containers
-
-Start all services:
-
-```bash
-docker-compose up -d
-```
-
-Stop services:
-
-```bash
-docker-compose down
-```
-
-Restart with rebuild:
-
-```bash
-docker-compose up -d --build --force-recreate
-```
-
-## Monitoring and Logs
-
-View logs:
-
-```bash
-docker-compose logs -f backend
-docker-compose logs -f frontend
-```
-
-Container stats:
-
-```bash
-docker stats
-```
-
-Execute command in container:
-
-```bash
-docker-compose exec backend node -v
-docker-compose exec backend sh  # Open shell
+```sh
+docker compose logs -f app
+docker compose logs -f session-manager
 ```
 
 ## Troubleshooting
 
-**Port already in use:**
+- **"Source database not found":** `FLASHPOINT_HOST_PATH` doesn't point at a
+  folder with `Data/flashpoint.sqlite`. Check with
+  `docker compose exec app ls /data/flashpoint/Data`.
+- **Missing playlists or settings:** `Data/Playlists` or `preferences.json` is
+  missing. Re-run `scripts/setup-flashpoint.sh`, which takes them from
+  `Base_1.zip`, or add `--with-infinity`.
+- **Permission errors on `./data` or `./logs`:** set `PUID`/`PGID` to the owner
+  of those folders.
 
-```bash
-# Linux/Mac
-lsof -i :3100
-
-# Windows
-netstat -ano | findstr :3100
-```
-
-**Volume mount failed:**
-
-- Verify `FLASHPOINT_HOST_PATH` is set
-- Check path exists and is readable
-- On Windows, ensure Docker has drive access
-
-**Health check failing:**
-
-```bash
-# Check directly
-curl http://localhost:3100/api/health
-
-# From container
-docker-compose exec backend curl http://localhost:3100/api/health
-
-# View health details
-docker inspect flashpoint-backend --format='{{json .State.Health}}' | jq
-```
-
-**Database connection issues:**
-
-```bash
-# Verify database exists
-docker-compose exec backend ls -la /data/flashpoint/Data/flashpoint.sqlite
-
-# Test connection
-docker-compose exec backend sqlite3 /data/flashpoint/Data/flashpoint.sqlite "SELECT COUNT(*) FROM game;"
-```
-
-**Service communication:**
-
-```bash
-# Test backend health
-docker-compose exec backend curl http://localhost:3100/api/health
-```
-
-## Best Practices
-
-1. Use named volumes for persistent data
-2. Set resource limits to prevent resource exhaustion
-3. Enable health checks for automatic recovery
-4. Restrict the Flashpoint mount to the single directory the app needs
-5. Run as non-root user
-6. Keep images updated with security patches
-7. Monitor logs regularly
-8. Backup user database before updates
-9. Use .env file for configuration
-10. Tag images with version numbers in production
-
-## Next Steps
+## Next steps
 
 - [Environment Variables](./environment-variables.md)
 - [Security Considerations](./security-considerations.md)
+- [Upgrade Guide](./upgrade-guide.md)

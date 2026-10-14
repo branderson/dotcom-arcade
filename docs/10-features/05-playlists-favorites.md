@@ -2,7 +2,7 @@
 
 ## Overview
 
-Flashpoint Web provides three systems for organizing games:
+Dotcom Arcade provides three systems for organizing games:
 
 1. **Flashpoint Playlists** - JSON files compatible with Flashpoint Launcher
 2. **User Playlists** - Database-driven per-user playlists with sharing

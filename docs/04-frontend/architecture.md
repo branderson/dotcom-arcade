@@ -1,7 +1,7 @@
 # Frontend Architecture
 
 This document describes the architectural patterns, design decisions, and
-technical implementation details of the Flashpoint Web frontend.
+technical implementation details of the Dotcom Arcade frontend.
 
 ## Architecture Overview
 

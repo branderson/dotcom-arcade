@@ -1,7 +1,7 @@
 # Component Overview
 
 This document provides an overview of the component architecture and
-organization in the Flashpoint Web frontend.
+organization in the Dotcom Arcade frontend.
 
 ## Component Organization
 

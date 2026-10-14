@@ -442,4 +442,4 @@ For questions about the architecture:
 
 **Last Updated**: 2025-01-18
 
-**Maintainers**: Flashpoint Web Development Team
+**Maintainers**: Dotcom Arcade Development Team

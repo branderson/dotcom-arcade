@@ -1,7 +1,7 @@
-# Flashpoint Web - Technical Documentation
+# Dotcom Arcade - Technical Documentation
 
-Complete technical documentation for the Flashpoint Web project, a self-hosted
-web application for browsing and playing games from the Flashpoint Archive.
+Technical documentation for Dotcom Arcade, a self-hosted, Flash-era game portal
+for Flashpoint Ultimate.
 
 ## Documentation Structure
 
@@ -154,6 +154,14 @@ web application for browsing and playing games from the Flashpoint Archive.
 - [System Settings](10-features/09-system-settings.md) - System configuration
 - [Date/Time Formatting](10-features/10-date-time-formatting.md) - Date display
   formatting
+- [Maintenance Mode](10-features/11-maintenance-mode.md) - Restricting access
+  during updates
+- [Discovery Portal](10-features/12-discovery-portal.md) - Portal layout,
+  homepage discovery, game page and mature content filter
+- [Streaming](10-features/13-streaming.md) - Games streamed from the server
+- [Proxy Sign-In](10-features/14-proxy-sign-in.md) - Sign-in through Authentik,
+  Authelia or oauth2-proxy
+- [Game Saves](10-features/15-game-saves.md) - Saves kept on players' accounts
 
 ### 11. Diagrams
 

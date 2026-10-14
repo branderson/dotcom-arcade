@@ -2,8 +2,8 @@
 
 ## Project Overview
 
-Flashpoint Web: self-hosted web app for browsing/playing Flashpoint Archive
-games.
+Dotcom Arcade: a self-hosted, Flash-era game portal for Flashpoint Ultimate.
+Built on darkraise's flashpoint-web.
 
 - **Backend** (Express/TypeScript, port 3100): REST API + game content via
   `/game-proxy/*`, `/game-zip/*`
@@ -11,6 +11,8 @@ games.
   Tailwind, Ruffle
 - **Databases**: `flashpoint.sqlite` (read-only, never write) + `user.db` (app
   data)
+- **Streaming** (`streaming/`): a session manager and per-player streamer
+  containers for games that can't run in a browser; see `streaming/README.md`
 
 ## Commands
 

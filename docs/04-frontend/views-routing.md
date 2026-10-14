@@ -1,7 +1,7 @@
 # Views and Routing
 
 Complete documentation of all views, routes, and route protection in the
-Flashpoint Web frontend.
+Dotcom Arcade frontend.
 
 ## Route Structure
 

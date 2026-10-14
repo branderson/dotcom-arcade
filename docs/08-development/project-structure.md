@@ -1,6 +1,6 @@
 # Project Structure
 
-Flashpoint Web codebase organization.
+Dotcom Arcade codebase organization.
 
 ## Repository Overview
 

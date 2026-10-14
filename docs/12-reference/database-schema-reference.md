@@ -1,6 +1,6 @@
 # Database Schema Reference
 
-Reference for Flashpoint Web database schemas: flashpoint.sqlite (read-only) and
+Reference for Dotcom Arcade database schemas: flashpoint.sqlite (read-only) and
 user.db (read-write).
 
 ## Flashpoint Database (flashpoint.sqlite)

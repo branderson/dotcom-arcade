@@ -1,6 +1,6 @@
 # Coding Standards
 
-Coding standards and best practices for Flashpoint Web development.
+Coding standards and best practices for Dotcom Arcade development.
 
 ## TypeScript Standards
 

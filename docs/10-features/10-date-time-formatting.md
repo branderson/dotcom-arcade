@@ -3,7 +3,7 @@
 ## Overview
 
 Date & Time Formatting provides customizable date and time display formats
-throughout Flashpoint Web. Users can choose from multiple format options that
+throughout Dotcom Arcade. Users can choose from multiple format options that
 apply globally to all date and time displays, ensuring consistent and localized
 presentation.
 

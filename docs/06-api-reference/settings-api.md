@@ -111,7 +111,7 @@ Clears permission cache entries.
 | auth     | userRegistrationEnabled       | boolean | true           | -                                      |
 | auth     | maxLoginAttempts              | number  | 5              | 1-20                                   |
 | auth     | lockoutDurationMinutes        | number  | 15             | 1-1440                                 |
-| app      | siteName                      | string  | Flashpoint Web | maxLength: 100                         |
+| app      | siteName                      | string  | Dotcom Arcade | maxLength: 100                         |
 | app      | maintenanceMode               | boolean | false          | -                                      |
 | app      | defaultTheme                  | string  | dark           | light\|dark\|system                    |
 | app      | defaultPrimaryColor           | string  | blue           | blue\|green\|red\|purple\|orange\|pink |
