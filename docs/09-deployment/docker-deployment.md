@@ -45,10 +45,9 @@ pushes them to the Gitea instance's container registry, under the repository's
 owner. Pushes to `main` publish a `main` tag; `v1.2.3` tags publish `1.2.3`,
 `1.2` and `latest`. Its jobs run docker builds, so they need a runner labelled
 `dejima-privileged`; jobs that don't build images should use `dejima-confined`.
-It also needs two repository secrets:
-
-- `REGISTRY_USERNAME`: a user;
-- `REGISTRY_TOKEN`: an access token of theirs with package write access.
+It also needs a repository secret, `REGISTRY_TOKEN`: an access token with
+package write access, belonging to the repository's owner, whom the workflow
+logs in as.
 
 ## Volumes
 

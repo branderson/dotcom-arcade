@@ -1,8 +1,8 @@
 # Builds the app, session manager and streamer images and pushes them to this
 # Gitea instance's container registry, under the repository's owner.
 #
-# Needs repository secrets REGISTRY_USERNAME and REGISTRY_TOKEN: a user, and an
-# access token of theirs with package write access.
+# Needs a repository secret REGISTRY_TOKEN: an access token with package write
+# access, belonging to the repository's owner.
 name: Images
 
 on:
@@ -46,7 +46,7 @@ jobs:
       - uses: docker/login-action@v3
         with:
           registry: ${{ steps.registry.outputs.host }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.REGISTRY_TOKEN }}
 
       - id: meta
