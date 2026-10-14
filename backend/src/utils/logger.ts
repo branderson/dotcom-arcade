@@ -154,7 +154,7 @@ export const logger = winston.createLogger({
     otelFormat(),
     winston.format.json()
   ),
-  defaultMeta: { service: 'flashpoint-web-backend' },
+  defaultMeta: { service: 'dotcom-arcade-backend' },
   transports,
 });
 

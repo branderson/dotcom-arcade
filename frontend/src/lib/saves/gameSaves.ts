@@ -33,7 +33,7 @@ export interface SaveSyncState {
 const STATE_DB = 'flashpoint-save-sync';
 const STATE_STORE = 'games';
 
-/** flashpoint-web's own storage, never part of a game's save */
+/** The app's own storage, never part of a game's save */
 const APP_DATABASES = new Set(['flashpoint-stream-saves', STATE_DB]);
 // Unity WebGL's asset cache: large and re-downloadable, not a save
 const IGNORED_DATABASES = new Set(['UnityCache']);
@@ -170,7 +170,7 @@ async function gameDatabaseHashes(): Promise<Map<string, string>> {
 }
 
 /**
- * Notices what a running game changes. Games share flashpoint-web's origin and
+ * Notices what a running game changes. Games share the app's origin and
  * Ruffle saves may use a site-wide path, so storage that changes while a game
  * runs is attributed to it rather than guessed from names.
  */

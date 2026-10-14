@@ -61,7 +61,7 @@ const clientErrorLogger = winston.createLogger({
     })(),
     winston.format.json()
   ),
-  defaultMeta: { service: 'flashpoint-web-client' },
+  defaultMeta: { service: 'dotcom-arcade-client' },
   transports: [
     new winston.transports.File({
       filename: ERROR_LOG_FILE,

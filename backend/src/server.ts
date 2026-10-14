@@ -225,7 +225,7 @@ async function startServer() {
   // pre-warm can run for minutes, and a closed port shows the user a connection
   // error instead of a page that explains itself.
   const server = app.listen(config.port, config.host, () => {
-    logger.info(`🚀 Flashpoint Web API server running on http://${config.host}:${config.port}`);
+    logger.info(`🚀 Dotcom Arcade server running on http://${config.host}:${config.port}`);
     logger.info(`📁 Flashpoint path: ${config.flashpointPath}`);
     logger.info(`🎮 Game content: /game-proxy/* and /game-zip/* (integrated)`);
     logger.info(`🌍 Environment: ${config.nodeEnv}`);
