@@ -115,6 +115,14 @@ and API share one origin.
 | `FRONTEND_DIST_PATH` | `<backend>/../frontend/dist`  | Location of the built frontend (rarely needed)                 |
 | `RUFFLE_DATA_PATH`   | `/app/data/ruffle` in production | Where Ruffle is installed. Must sit on a mounted volume, or an in-app update is lost when the container is recreated |
 
+**Images and updates:**
+
+| Variable         | Default  | Description                                                                                       |
+| ---------------- | -------- | ------------------------------------------------------------------------------------------------- |
+| `IMAGE_PREFIX`   | -        | Registry path to pull images from, ending in `/`. Unset builds them from source                   |
+| `IMAGE_TAG`      | `latest` | Image tag to build or pull                                                                        |
+| `APP_UPDATE_URL` | -        | "Latest release" API URL (GitHub or Gitea) that Settings checks for new versions; off when unset |
+
 **Streaming:**
 
 Games that can't run in a browser, such as Java applets and Shockwave, can be

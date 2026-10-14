@@ -26,6 +26,28 @@ walks through a first install; this page covers the details.
 
 All three are built from this repository by `docker compose up -d --build`.
 
+### Prebuilt images
+
+To pull published images instead of building, set `IMAGE_PREFIX` in `.env` to
+the registry path they live under, ending in `/`, and optionally `IMAGE_TAG`:
+
+```sh
+IMAGE_PREFIX=registry.example.com/owner/
+IMAGE_TAG=latest
+```
+
+Then run `docker compose pull && docker compose up -d`.
+
+### Publishing images
+
+`.gitea/workflows/images.yml` builds all three images on Gitea Actions and
+pushes them to the Gitea instance's container registry, under the repository's
+owner. Pushes to `main` publish a `main` tag; `v1.2.3` tags publish `1.2.3`,
+`1.2` and `latest`. It needs two repository secrets:
+
+- `REGISTRY_USERNAME`: a user;
+- `REGISTRY_TOKEN`: an access token of theirs with package write access.
+
 ## Volumes
 
 | Host                    | Container          | Purpose                                                              |
