@@ -43,7 +43,9 @@ Then run `docker compose pull && docker compose up -d`.
 `.gitea/workflows/images.yml` builds all three images on Gitea Actions and
 pushes them to the Gitea instance's container registry, under the repository's
 owner. Pushes to `main` publish a `main` tag; `v1.2.3` tags publish `1.2.3`,
-`1.2` and `latest`. It needs two repository secrets:
+`1.2` and `latest`. Its jobs run docker builds, so they need a runner labelled
+`dejima-privileged`; jobs that don't build images should use `dejima-confined`.
+It also needs two repository secrets:
 
 - `REGISTRY_USERNAME`: a user;
 - `REGISTRY_TOKEN`: an access token of theirs with package write access.
