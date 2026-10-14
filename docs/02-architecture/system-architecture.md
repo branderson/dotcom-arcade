@@ -2,7 +2,7 @@
 
 ## Overview
 
-Flashpoint Web is a monorepo containing **2 independent services**: frontend (React UI)
+Dotcom Arcade is a monorepo containing **2 independent services**: frontend (React UI)
 and backend (Express API with integrated game file serving). Services communicate via HTTP
 with clean separation of concerns. The backend handles metadata, authentication, business
 logic, and game file serving with hardened resource management (connection limits, stream
@@ -445,7 +445,7 @@ consistent tooling
 
 ## Conclusion
 
-Flashpoint Web balances simplicity with scalability, maintaining clean separation
+Dotcom Arcade balances simplicity with scalability, maintaining clean separation
 of concerns between frontend UI and backend business logic. Game file serving is
 integrated into the backend, eliminating inter-service HTTP overhead while
 keeping the codebase maintainable and type-safe. The two-service design is

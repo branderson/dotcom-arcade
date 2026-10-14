@@ -1,7 +1,7 @@
 # Backend Service
 
 The backend is a REST API built with Express and TypeScript that serves as the
-central hub for the Flashpoint Web application. It manages game metadata, user
+central hub for the Dotcom Arcade application. It manages game metadata, user
 accounts, authentication, and serves game content directly via integrated
 game-proxying (formerly provided by a separate game-service).
 

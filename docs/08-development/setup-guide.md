@@ -1,6 +1,6 @@
 # Development Setup Guide
 
-Complete guide to setting up Flashpoint Web development environment.
+Complete guide to setting up Dotcom Arcade development environment.
 
 ## Prerequisites
 
@@ -38,8 +38,8 @@ git --version  # Verify
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/darkraise/flashpoint-web.git
-cd flashpoint-web
+git clone <repository-url> dotcom-arcade
+cd dotcom-arcade
 ```
 
 ### 2. Install Dependencies

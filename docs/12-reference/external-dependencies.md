@@ -1,6 +1,6 @@
 # External Dependencies Reference
 
-Reference for all npm packages used across the Flashpoint Web monorepo.
+Reference for all npm packages used across the Dotcom Arcade monorepo.
 
 ## Backend Dependencies
 

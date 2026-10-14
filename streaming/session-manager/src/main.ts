@@ -12,8 +12,8 @@ function env(name: string, fallback?: string): string {
 }
 
 const driver = new DockerDriver({
-  image: env('STREAMER_IMAGE', 'flashpoint-streamer'),
-  network: env('STREAMER_NETWORK', 'flashpoint-streams'),
+  image: env('STREAMER_IMAGE', 'dotcom-arcade-streamer'),
+  network: env('STREAMER_NETWORK', 'dotcom-arcade-streams'),
   flashpointHostPath: env('FLASHPOINT_HOST_PATH'),
   uid: Number(env('PUID', '1000')),
   gid: Number(env('PGID', '1000')),

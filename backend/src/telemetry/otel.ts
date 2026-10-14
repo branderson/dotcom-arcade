@@ -17,7 +17,7 @@ import { logger } from '../utils/logger';
  * - OTEL_ENABLED: Enable/disable telemetry (true/false)
  * - OTEL_EXPORTER_OTLP_ENDPOINT: OTLP endpoint (e.g., http://localhost:4318)
  * - OTEL_API_KEY: API key for authentication (sent as "Authorization: Api-Key <key>")
- * - OTEL_SERVICE_NAME: Service name (default: flashpoint-web-backend)
+ * - OTEL_SERVICE_NAME: Service name (default: dotcom-arcade-backend)
  * - OTEL_TRACES_ENABLED: Enable traces (default: true)
  * - OTEL_METRICS_ENABLED: Enable metrics (default: true)
  * - OTEL_METRICS_EXPORT_INTERVAL: Metrics export interval in ms (default: 60000)
@@ -40,7 +40,7 @@ function getOtelConfig() {
     enabled: process.env.OTEL_ENABLED === 'true',
     endpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318',
     apiKey: process.env.OTEL_API_KEY || '',
-    serviceName: process.env.OTEL_SERVICE_NAME || 'flashpoint-web-backend',
+    serviceName: process.env.OTEL_SERVICE_NAME || 'dotcom-arcade-backend',
     serviceVersion: process.env.npm_package_version || '1.0.0',
     tracesEnabled: process.env.OTEL_TRACES_ENABLED !== 'false',
     metricsEnabled: process.env.OTEL_METRICS_ENABLED !== 'false',

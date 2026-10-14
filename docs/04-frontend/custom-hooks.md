@@ -1,6 +1,6 @@
 # Custom Hooks
 
-Comprehensive documentation of all custom React hooks in the Flashpoint Web
+Comprehensive documentation of all custom React hooks in the Dotcom Arcade
 frontend.
 
 ## Overview

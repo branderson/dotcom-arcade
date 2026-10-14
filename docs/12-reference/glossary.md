@@ -1,6 +1,6 @@
 # Glossary
 
-Technical terms and project-specific terminology used throughout Flashpoint Web.
+Technical terms and project-specific terminology used throughout Dotcom Arcade.
 
 ## Project-Specific Terms
 
@@ -50,7 +50,7 @@ origins for public game embedding.
 **bcrypt** - Password hashing function based on Blowfish cipher. Cost factor 10
 (2^10 = 1024 rounds). Automatically salts and one-way hashes.
 
-**SQLite** - Serverless SQL database. Flashpoint Web uses two: flashpoint.sqlite
+**SQLite** - Serverless SQL database. Dotcom Arcade uses two: flashpoint.sqlite
 (read-only) and user.db (read-write). No separate server required.
 
 **Hot-Reload** - Automatic reloading when database files change. DatabaseService
@@ -183,7 +183,7 @@ ActionScript, timeline animation. MIME: application/x-shockwave-flash.
 3 (performance/modern OOP).
 
 **Shockwave** - Predecessor to Flash by Adobe/Macromedia. File format: DCR. Not
-currently supported in Flashpoint Web.
+currently supported in Dotcom Arcade.
 
 **HTML5 Games** - Games using standard web tech (HTML, CSS, JavaScript). Canvas,
 Web Audio, WebGL APIs.

@@ -1,7 +1,7 @@
 # Layout Components
 
 This document describes the layout components that form the structure of the
-Flashpoint Web application.
+Dotcom Arcade application.
 
 Public pages use `PortalLayout` instead of `AppShell`; see
 [Discovery Portal](../../10-features/12-discovery-portal.md). `AppShell` remains
@@ -286,16 +286,7 @@ interface SidebarProps {
 
 ```typescript
 const gameNavItems: NavItem[] = [
-  {
-    path: '/flash-games',
-    iconImage: '/images/Flash.png',
-    label: 'Flash Games',
-  },
-  {
-    path: '/html5-games',
-    iconImage: '/images/HTML5.png',
-    label: 'HTML5 Games',
-  },
+  { path: '/', icon: Home, label: 'Home' },
   { path: '/animations', icon: Film, label: 'Animations' },
   { path: '/browse', icon: Gamepad2, label: 'Browse' },
 ];
@@ -358,11 +349,6 @@ const isNavItemActive = (item: NavItem) => {
     return (
       location.pathname === itemPath && location.search === `?${itemQuery}`
     );
-  }
-
-  // Special case: Home (/) should highlight Flash Games
-  if (location.pathname === '/' && itemPath === '/flash-games') {
-    return true;
   }
 
   return location.pathname === itemPath;

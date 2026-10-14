@@ -213,19 +213,6 @@ Returns `202 Accepted`
 
 Returns progress percentage, stage, estimated completion time.
 
-## GitHub Endpoints
-
-### Get GitHub Star Count
-
-`GET /api/github/stars` - No auth required
-
-```json
-{
-  "success": true,
-  "data": { "stars": 2847 }
-}
-```
-
 ## Statistics Endpoints
 
 ### Get Archive Statistics

@@ -1,6 +1,6 @@
 # Health Checks Configuration
 
-Docker container health checks for Flashpoint Web services.
+Docker container health checks for Dotcom Arcade services.
 
 ## Health Check Configuration
 

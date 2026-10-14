@@ -1,6 +1,6 @@
 # Debugging Guide
 
-Debugging Flashpoint Web across all services.
+Debugging Dotcom Arcade across all services.
 
 ## Development Tools
 

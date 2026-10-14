@@ -51,7 +51,7 @@ const INFO = {
   updateAvailable: true,
   isUnreleasedBuild: false,
   publishedAt: '2026-08-12T07:11:45Z',
-  releaseUrl: 'https://github.com/darkraise/flashpoint-web/releases/tag/v1.0.42',
+  releaseUrl: 'https://git.example.com/owner/dotcom-arcade/releases/tag/v1.0.42',
   changelog: '## Changes',
   checkedAt: '2026-08-12T08:00:00.000Z',
   lastCheckFailed: false,

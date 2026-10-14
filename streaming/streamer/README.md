@@ -1,35 +1,35 @@
-# Flashpoint streamer (prototype)
+# Streamer
 
 Runs a Flashpoint game natively on the server and streams it to the browser with
 [Selkies](https://github.com/selkies-project/selkies), for platforms that cannot
 run in a browser. One container plays one game, set by `GAME_ID`. It launches
-games the way Flashpoint's Linux launcher does, so Java applets, Shockwave,
-Flash and Windows games installed under `LocalGames/` (see
-[local-games](../local-games/README.md)) all run.
+games the way Flashpoint's Linux launcher does, so Java applets, Shockwave and
+Flash run, as do Windows games installed under `LocalGames/<name>/` with an
+application path of `LocalGames\<name>\<game>.exe`.
 
 ## Requirements
 
-A Linux Flashpoint install at `FLASHPOINT_HOST_PATH`. The streamer uses the
-Infinity build's `Server/FlashpointGameServer`, `FPSoftware/Java` and
-`FPSoftware/Wine`, which
-Ultimate's packed zips do not include on Linux. To add them to an extracted
-Ultimate without overwriting its data, copy an extracted
-[Infinity for Linux](https://flashpointarchive.org/downloads) over it:
+A Linux Flashpoint install. The streamer uses the Infinity build's
+`Server/FlashpointGameServer`, `FPSoftware/Java` and `FPSoftware/Wine`, which
+Ultimate's archives only include for Windows.
+`scripts/setup-flashpoint.sh --infinity` adds them without overwriting
+anything.
+
+## Running one by hand
+
+The session manager normally starts these. To debug a game on its own:
 
 ```sh
-rsync -a --ignore-existing /path/to/infinity/ /path/to/flashpoint/
+docker build -t dotcom-arcade-streamer streaming/streamer
+docker run --rm --shm-size 1g -p 3001:3001 \
+  -v /path/to/flashpoint:/flashpoint:ro \
+  -e GAME_ID=<game id> -e SELKIES_MANUAL_WIDTH=800 -e SELKIES_MANUAL_HEIGHT=600 \
+  -e RESTART_APP=true -e NO_DECOR=true \
+  dotcom-arcade-streamer
 ```
 
-## Usage
-
-```sh
-FLASHPOINT_HOST_PATH=/path/to/flashpoint docker compose up -d --build
-```
-
-Open `https://<host>:3001` and accept the self-signed certificate. To play a
-different game, set `GAME_ID`, plus `GAME_WIDTH` and `GAME_HEIGHT` to its
-window size, and recreate the container. The launch log is at
-`/config/fp-launch.log` inside the container.
+Open `https://<host>:3001` and accept the self-signed certificate. The launch
+log is at `/config/fp-launch.log` inside the container.
 
 ## How it works
 

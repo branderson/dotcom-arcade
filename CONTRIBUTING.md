@@ -1,8 +1,8 @@
-# Contributing to Flashpoint Web
+# Contributing to Dotcom Arcade
 
 Thanks for your interest in contributing! We welcome bug fixes, features, documentation improvements, and questions.
 
-## What is Flashpoint Web?
+## What is Dotcom Arcade?
 
 A self-hosted web application for browsing and playing games from [Flashpoint Archive](https://flashpointarchive.org/).
 
@@ -57,17 +57,14 @@ docs/       # Documentation
 cp .env.example .env
 # Edit .env - set FLASHPOINT_HOST_PATH and JWT_SECRET (required)
 
-# Build and start (development)
-docker compose -f docker-compose.dev.yml up -d --build
+# Build and start
+docker compose up -d --build
 
 # View logs
-docker compose -f docker-compose.dev.yml logs -f
-
-# Rebuild specific service
-docker compose -f docker-compose.dev.yml up -d --build backend
+docker compose logs -f
 ```
 
-Frontend runs on `http://localhost:80`, backend API on `http://localhost:3100`.
+The app (UI and API) runs on `http://localhost:80`.
 
 ### Option 2: Manual Setup (Recommended for Development)
 

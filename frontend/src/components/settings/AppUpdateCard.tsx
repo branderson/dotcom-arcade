@@ -51,14 +51,14 @@ export function AppUpdateCard() {
       if (result.lastCheckFailed) {
         showToast('Could not reach GitHub to check for updates', 'error');
       } else if (result.updateAvailable) {
-        showToast(`Flashpoint Web ${result.latestVersion} is available`, 'success');
+        showToast(`Dotcom Arcade ${result.latestVersion} is available`, 'success');
       } else if (result.isUnreleasedBuild) {
         showToast(
           `Update checks are off for this build (latest release: ${result.latestVersion ?? 'unknown'})`,
           'info'
         );
       } else if (versionsMatch(result.currentVersion, result.latestVersion)) {
-        showToast('Flashpoint Web is up to date', 'success');
+        showToast('Dotcom Arcade is up to date', 'success');
       } else {
         showToast(`Latest release: ${result.latestVersion ?? 'unknown'}`, 'info');
       }
@@ -73,6 +73,9 @@ export function AppUpdateCard() {
     setShowChangelog(true);
   }
 
+  // Without a release source (APP_UPDATE_URL) there is nothing to check
+  if (info?.enabled === false) return null;
+
   const checkFailedEntirely =
     isLoadingError || (info?.lastCheckFailed === true && info.latestVersion === null);
   const currentVersionMatchesLatest = info
@@ -84,7 +87,7 @@ export function AppUpdateCard() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Rocket size={24} className="text-primary" aria-hidden="true" />
-          <h2 className="text-xl font-semibold">Flashpoint Web</h2>
+          <h2 className="text-xl font-semibold">Dotcom Arcade</h2>
         </div>
         <Button
           variant="outline"

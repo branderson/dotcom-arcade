@@ -1,6 +1,6 @@
 # Design Patterns
 
-Common UI patterns and best practices for Flashpoint Web.
+Common UI patterns and best practices for Dotcom Arcade.
 
 ## Layout Patterns
 

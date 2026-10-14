@@ -1,7 +1,7 @@
 # Zustand Stores
 
 This document describes the Zustand stores used for client-side state management
-in the Flashpoint Web frontend.
+in the Dotcom Arcade frontend.
 
 ## Overview
 

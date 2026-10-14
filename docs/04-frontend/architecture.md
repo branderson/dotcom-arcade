@@ -1,7 +1,7 @@
 # Frontend Architecture
 
 This document describes the architectural patterns, design decisions, and
-technical implementation details of the Flashpoint Web frontend.
+technical implementation details of the Dotcom Arcade frontend.
 
 ## Architecture Overview
 
@@ -205,9 +205,9 @@ Routes are defined in `App.tsx` with nested routing structure:
     <AppShell>
       <Routes>
         {/* Public routes */}
-        <Route path="/flash-games" element={
+        <Route path="/browse" element={
           <ProtectedRoute requireAuth={false}>
-            <FlashGamesView />
+            <BrowseView />
           </ProtectedRoute>
         } />
 

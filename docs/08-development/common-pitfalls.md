@@ -1,6 +1,6 @@
 # Common Pitfalls
 
-Known issues and solutions for Flashpoint Web development.
+Known issues and solutions for Dotcom Arcade development.
 
 ## Environment Setup Issues
 

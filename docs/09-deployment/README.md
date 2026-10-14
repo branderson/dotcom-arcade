@@ -1,6 +1,6 @@
 # Deployment Documentation
 
-Complete deployment guides for Flashpoint Web in development, staging, and
+Complete deployment guides for Dotcom Arcade in development, staging, and
 production environments.
 
 ## Quick Links

@@ -1,25 +1,27 @@
 # =============================================================================
-# Flashpoint Web - Production Docker Compose
+# Dotcom Arcade
 # =============================================================================
-# Single image serving both the API and the web UI.
-# Uses a pre-built image from the container registry.
+# The app serves the UI and API. With the "streaming" profile, a session
+# manager also streams games that can't run in a browser (Java, Shockwave,
+# Flash Player, Windows games), one container per player.
 #
 # Usage:
-#   1. Copy .env.example to .env and configure required variables
-#   2. docker compose up -d
+#   1. Copy .env.example to .env and set the required variables
+#   2. docker compose up -d --build
+#      (or, with IMAGE_PREFIX set to a registry's images:
+#      docker compose pull && docker compose up -d)
+#   3. For streaming, set STREAMING_API_TOKEN and COMPOSE_PROFILES=streaming in
+#      .env, then run `docker compose up -d --build` again
 #
-# For local development with image building, use:
-#   docker compose -f docker-compose.dev.yml up -d --build
-#
-# User permissions:
-#   Set PUID/PGID to match your host user (run 'id -u' and 'id -g' to find)
-#   This ensures bind-mounted volumes have correct ownership
+# Set PUID/PGID to your host user (`id -u`, `id -g`) so bind-mounted volumes
+# get the right ownership.
 # =============================================================================
 
 services:
-  flashpoint-web:
-    image: darkraise/flashpoint-web:${IMAGE_TAG:-latest}
-    container_name: flashpoint-web
+  app:
+    build: .
+    image: ${IMAGE_PREFIX:-}dotcom-arcade:${IMAGE_TAG:-latest}
+    container_name: dotcom-arcade
     restart: unless-stopped
     ports:
       # Serves both the UI and the API (/api, /game-proxy, /game-zip) on one port
@@ -54,10 +56,12 @@ services:
       - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-60000}
       - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
       # Application
-      - HOME_RECENT_HOURS=${HOME_RECENT_HOURS:-24}
+      # "Latest release" API URL (GitHub or Gitea) for update checks; off when unset
+      - APP_UPDATE_URL=${APP_UPDATE_URL:-}
       - ENABLE_CGI=${ENABLE_CGI:-false}
-      # Streamed play for games that can't run in a browser (off unless both are set)
-      - STREAMING_API_URL=${STREAMING_API_URL:-}
+      # Streamed play for games that can't run in a browser (off unless the token is set)
+      - STREAMING_API_URL=${STREAMING_API_URL:-http://session-manager:8080}
+      - STREAMING_STREAM_URL=${STREAMING_STREAM_URL:-http://session-manager:8081}
       - STREAMING_API_TOKEN=${STREAMING_API_TOKEN:-}
       # Sign in users named by an authenticating reverse proxy (off unless both are set)
       - TRUSTED_HEADER_USERNAME=${TRUSTED_HEADER_USERNAME:-}
@@ -67,7 +71,7 @@ services:
       - OTEL_ENABLED=${OTEL_ENABLED:-false}
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       - OTEL_API_KEY=${OTEL_API_KEY:-}
-      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-flashpoint-web}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-dotcom-arcade}
       - OTEL_TRACES_ENABLED=${OTEL_TRACES_ENABLED:-true}
       - OTEL_METRICS_ENABLED=${OTEL_METRICS_ENABLED:-true}
       - OTEL_METRICS_EXPORT_INTERVAL=${OTEL_METRICS_EXPORT_INTERVAL:-60000}
@@ -94,8 +98,46 @@ services:
           cpus: "0.5"
           memory: 512M
     networks:
-      - flashpoint-network
+      - arcade
+
+  # Starts a streamer container per player. The app proxies /stream/ to it, so
+  # it publishes no ports.
+  session-manager:
+    profiles: [streaming]
+    build: streaming/session-manager
+    image: ${IMAGE_PREFIX:-}dotcom-arcade-session-manager:${IMAGE_TAG:-latest}
+    container_name: dotcom-arcade-session-manager
+    restart: unless-stopped
+    volumes:
+      # Starts and removes streamer containers. Docker socket access is
+      # effectively root on the host.
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${FLASHPOINT_HOST_PATH:?FLASHPOINT_HOST_PATH is required}:/flashpoint:ro
+    environment:
+      - FLASHPOINT_HOST_PATH
+      # The session manager refuses to start without it
+      - API_TOKEN=${STREAMING_API_TOKEN:-}
+      - STREAMER_IMAGE=${IMAGE_PREFIX:-}dotcom-arcade-streamer:${IMAGE_TAG:-latest}
+      - STREAMER_NETWORK=dotcom-arcade-streams
+      - MAX_SESSIONS=${MAX_SESSIONS:-4}
+      - STREAM_PLATFORMS=${STREAM_PLATFORMS:-Java,Shockwave,Flash}
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+    networks:
+      - arcade
+      - streams
+
+  # The image the session manager runs per player; built here, never started by compose
+  streamer:
+    profiles: [streaming]
+    build: streaming/streamer
+    image: ${IMAGE_PREFIX:-}dotcom-arcade-streamer:${IMAGE_TAG:-latest}
+    scale: 0
 
 networks:
-  flashpoint-network:
-    driver: bridge
+  arcade:
+    name: dotcom-arcade
+  # Streamer containers: reachable only from the session manager, no internet access
+  streams:
+    name: dotcom-arcade-streams
+    internal: true

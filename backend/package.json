@@ -1,5 +1,5 @@
 {
-  "name": "flashpoint-web-backend",
+  "name": "dotcom-arcade-backend",
   "version": "1.0.0",
   "description": "Backend API for Flashpoint Archive web application",
   "main": "dist/server.js",

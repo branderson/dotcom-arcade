@@ -1,6 +1,6 @@
 # Testing Guide
 
-Testing practices for Flashpoint Web.
+Testing practices for Dotcom Arcade.
 
 ## Testing Philosophy
 

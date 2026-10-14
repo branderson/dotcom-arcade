@@ -1,6 +1,6 @@
 # Type Definitions Reference
 
-Core TypeScript types and interfaces used throughout Flashpoint Web.
+Core TypeScript types and interfaces used throughout Dotcom Arcade.
 
 ## Game Types
 

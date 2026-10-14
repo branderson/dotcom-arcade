@@ -12,7 +12,7 @@ interface GameGridProps {
   isFavoritePage?: boolean;
   shareToken?: string | null;
   breadcrumbContext?: BreadcrumbContext;
-  /** Section key for URL building ('flash', 'html5', 'animations', 'browse') */
+  /** Section key for URL building ('animations', 'browse') */
   sectionKey?: string | null;
   /** Batch rating data keyed by game ID */
   ratingDataMap?: Record<string, BatchRatingAggregate>;

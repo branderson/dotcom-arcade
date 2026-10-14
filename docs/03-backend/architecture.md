@@ -1,6 +1,6 @@
 # Backend Architecture
 
-Architectural patterns and design decisions for the Flashpoint Web backend
+Architectural patterns and design decisions for the Dotcom Arcade backend
 service.
 
 ## Architecture Overview

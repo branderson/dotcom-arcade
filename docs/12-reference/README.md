@@ -1,6 +1,6 @@
 # Reference Documentation
 
-This directory contains comprehensive reference materials for the Flashpoint Web
+This directory contains comprehensive reference materials for the Dotcom Arcade
 application, including database schemas, type definitions, terminology, and
 dependency information.
 

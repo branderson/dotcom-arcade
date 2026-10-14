@@ -11,7 +11,7 @@ const STREAM_URL = /^\/stream\/([0-9a-f]{32})(\/.*)$/;
 const HEARTBEAT_MS = 25_000;
 const MAX_BODY_BYTES = 16 * 1024 * 1024;
 
-/** Internal API for flashpoint-web's backend: reports streamable games and creates sessions. */
+/** Internal API for the app's backend: reports streamable games and creates sessions. */
 export function createApiServer(sessions: SessionManager, catalog: Pick<GameCatalog, 'streamSize'>, token: string): http.Server {
   return http.createServer((req, res) => {
     handle(res, async () => {

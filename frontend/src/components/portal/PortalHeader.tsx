@@ -20,7 +20,7 @@ import { useMatureStore } from '@/store/mature';
 export const PortalHeader = forwardRef<HTMLInputElement>(function PortalHeader(_props, searchRef) {
   const navigate = useNavigate();
   const { data: publicSettings } = usePublicSettings();
-  const siteName = publicSettings?.app?.siteName ?? 'Flashpoint Archive';
+  const siteName = publicSettings?.app?.siteName ?? 'Dotcom Arcade';
   const tagline = publicSettings?.app?.tagline;
   const [query, setQuery] = useState('');
 

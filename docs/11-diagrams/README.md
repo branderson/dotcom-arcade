@@ -1,6 +1,6 @@
 # Mermaid Diagrams
 
-This directory contains Mermaid diagram source files for the Flashpoint Web
+This directory contains Mermaid diagram source files for the Dotcom Arcade
 documentation. These diagrams can be rendered in any Markdown viewer that
 supports Mermaid syntax (GitHub, GitLab, VS Code with Mermaid extension, etc.).
 

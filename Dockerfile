@@ -1,8 +1,8 @@
-# Production Dockerfile for Flashpoint Web (single image: API + UI)
+# Production Dockerfile for Dotcom Arcade (single image: API + UI)
 #
 # The backend serves both the REST API / game content and the built React UI,
 # so this image runs a single Node process. Build from the repo root:
-#   docker build -t flashpoint-web .
+#   docker build -t dotcom-arcade .
 
 # =============================================================================
 # Stage 1: Frontend builder - Build the React app
@@ -54,10 +54,9 @@ FROM node:20.18.2-alpine
 
 # Metadata labels
 ARG VERSION=dev
-LABEL org.opencontainers.image.title="Flashpoint Web"
-LABEL org.opencontainers.image.description="Self-hosted web app for Flashpoint Archive (API + UI)"
+LABEL org.opencontainers.image.title="Dotcom Arcade"
+LABEL org.opencontainers.image.description="Self-hosted Flash-era game portal for Flashpoint Ultimate (API + UI)"
 LABEL org.opencontainers.image.version="${VERSION}"
-LABEL org.opencontainers.image.source="https://github.com/darkraise/flashpoint-web"
 
 # An ARG does not survive into the running container; the server reads this to
 # decide whether it is a released build.

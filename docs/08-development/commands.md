@@ -1,6 +1,6 @@
 # Commands Reference
 
-All npm commands available in Flashpoint Web monorepo.
+All npm commands available in Dotcom Arcade monorepo.
 
 ## Monorepo Commands
 

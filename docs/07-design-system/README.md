@@ -1,6 +1,6 @@
 # Design System Overview
 
-The Flashpoint Web design system provides a consistent, accessible, and
+The Dotcom Arcade design system provides a consistent, accessible, and
 beautiful UI framework built on Tailwind CSS, Shadcn UI components, and Lucide
 icons.
 

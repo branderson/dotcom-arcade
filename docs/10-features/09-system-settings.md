@@ -3,7 +3,7 @@
 ## Overview
 
 System Settings provides flexible, centralized configuration management for
-Flashpoint Web. Settings are organized into categories, validated using JSON
+Dotcom Arcade. Settings are organized into categories, validated using JSON
 schemas, cached for performance, and accessible through web UI and REST API.
 
 ## Settings Categories
@@ -98,7 +98,7 @@ to `window.location.origin`.
 
 #### Update Tab
 
-- **Flashpoint Web** - Compares the running version against the latest GitHub
+- **Dotcom Arcade** - Compares the running version against the latest GitHub
   release and shows the changelog and upgrade command. Notify only: it never
   pulls or restarts anything. A build with no release version — a source
   checkout, or an image built without the `VERSION` build arg — reports that
@@ -184,7 +184,7 @@ All settings use JSON Schema validation:
 
 **App Defaults:**
 
-- siteName: "Flashpoint Web"
+- siteName: "Dotcom Arcade"
 - maintenanceMode: false
 - defaultTheme: "dark"
 - defaultPrimaryColor: "blue"

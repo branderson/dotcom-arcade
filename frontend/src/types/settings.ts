@@ -7,7 +7,6 @@ export interface AppSettings {
   maintenanceMessage: string;
   defaultTheme?: string;
   defaultPrimaryColor?: string;
-  homeRecentHours?: number;
 }
 
 export interface FeatureSettings {
@@ -71,10 +70,7 @@ export interface Domain {
 }
 
 export interface PublicSettings {
-  app: Pick<
-    AppSettings,
-    'siteName' | 'tagline' | 'maintenanceMode' | 'maintenanceMessage' | 'homeRecentHours'
-  >;
+  app: Pick<AppSettings, 'siteName' | 'tagline' | 'maintenanceMode' | 'maintenanceMessage'>;
   auth: Pick<AuthSettings, 'guestAccessEnabled' | 'userRegistrationEnabled'>;
   features?: Partial<FeatureSettings>;
   metadata?: {

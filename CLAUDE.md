@@ -2,8 +2,8 @@
 
 ## Project Overview
 
-Flashpoint Web: self-hosted web app for browsing/playing Flashpoint Archive
-games.
+Dotcom Arcade: a self-hosted, Flash-era game portal for Flashpoint Ultimate.
+Built on darkraise's flashpoint-web.
 
 - **Backend** (Express/TypeScript, port 3100): REST API + game content via
   `/game-proxy/*`, `/game-zip/*`
@@ -11,6 +11,8 @@ games.
   Tailwind, Ruffle
 - **Databases**: `flashpoint.sqlite` (read-only, never write) + `user.db` (app
   data)
+- **Streaming** (`streaming/`): a session manager and per-player streamer
+  containers for games that can't run in a browser; see `streaming/README.md`
 
 ## Commands
 
@@ -1191,13 +1193,8 @@ Before submitting code, verify:
 ## Environment
 
 ```bash
-FLASHPOINT_PATH=D:/Flashpoint   # Required - path to Flashpoint installation
+FLASHPOINT_PATH=/path/to/flashpoint   # Required - path to Flashpoint installation
 JWT_SECRET=your-secret          # Required - random string for JWT signing
 DOMAIN=http://localhost:5173    # Optional - frontend URL for CORS
 LOG_LEVEL=info                  # Optional - debug, info, warn, error
 ```
-
-## Source References
-
-- Flashpoint Launcher: `D:\Repositories\Community\launcher`
-- Flashpoint Game Server: `D:\Repositories\Community\FlashpointGameServer`
