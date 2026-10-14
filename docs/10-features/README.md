@@ -27,6 +27,8 @@ Web application.
     date/time formatting and localization across the application
 11. [Maintenance Mode](./11-maintenance-mode.md) - Temporarily restrict access
     during system updates while allowing admin access
+12. [Discovery Portal](./12-discovery-portal.md) - Arcade portal layout, color
+    schemes, discovery homepage and mature content filtering
 
 ## Quick Reference
 

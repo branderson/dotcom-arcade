@@ -353,6 +353,10 @@ export class DatabaseService {
       if (GameSearchCache) {
         GameSearchCache.clearCache();
       }
+      // Lazy require: MatureContentService queries through this service
+      (
+        require('./MatureContentService') as typeof import('./MatureContentService')
+      ).MatureContentService.invalidate();
       if (GameServiceStatic) {
         GameServiceStatic.clearFlashSwfCache();
         GameServiceStatic.clearFilterOptionsCache();
@@ -436,6 +440,10 @@ export class DatabaseService {
       if (GameSearchCache) {
         GameSearchCache.clearCache();
       }
+      // Lazy require: MatureContentService queries through this service
+      (
+        require('./MatureContentService') as typeof import('./MatureContentService')
+      ).MatureContentService.invalidate();
       if (GameServiceStatic) {
         GameServiceStatic.clearFlashSwfCache();
         GameServiceStatic.clearFilterOptionsCache();

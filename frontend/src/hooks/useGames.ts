@@ -1,11 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { gamesApi } from '@/lib/api';
+import { useMatureStore } from '@/store/mature';
 import { GameFilters } from '@/types/game';
 
-export function useGames(filters: GameFilters) {
+export function useGames(filters: GameFilters, options?: { enabled?: boolean }) {
+  const showExtreme = useMatureStore((state) => state.showMature);
+  const withMature = { ...filters, showExtreme };
   return useQuery({
-    queryKey: ['games', filters],
-    queryFn: ({ signal }) => gamesApi.search(filters, signal),
+    queryKey: ['games', withMature],
+    queryFn: ({ signal }) => gamesApi.search(withMature, signal),
+    enabled: options?.enabled !== false,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,
@@ -22,17 +26,19 @@ export function useGame(id: string, options?: { enabled?: boolean }) {
 }
 
 export function useRelatedGames(id: string, limit = 10) {
+  const showExtreme = useMatureStore((state) => state.showMature);
   return useQuery({
-    queryKey: ['games', id, 'related', limit],
-    queryFn: () => gamesApi.getRelated(id, limit),
+    queryKey: ['games', id, 'related', limit, showExtreme],
+    queryFn: () => gamesApi.getRelated(id, limit, showExtreme),
     enabled: !!id,
   });
 }
 
 export function useRandomGame(library?: string, platforms?: string[]) {
+  const showExtreme = useMatureStore((state) => state.showMature);
   return useQuery({
-    queryKey: ['games', 'random', library, platforms],
-    queryFn: () => gamesApi.getRandom(library, platforms),
+    queryKey: ['games', 'random', library, platforms, showExtreme],
+    queryFn: () => gamesApi.getRandom(library, platforms, showExtreme),
   });
 }
 

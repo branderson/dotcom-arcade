@@ -56,6 +56,7 @@ export function AppSettingsTab({ tabContentVariants }: AppSettingsTabProps) {
   const isAdmin = user?.permissions.includes('settings.update');
 
   const [siteNameInput, setSiteNameInput] = useState('');
+  const [taglineInput, setTaglineInput] = useState('');
 
   const [domainInput, setDomainInput] = useState('');
   const [domainError, setDomainError] = useState<string | null>(null);
@@ -76,6 +77,10 @@ export function AppSettingsTab({ tabContentVariants }: AppSettingsTabProps) {
       setSiteNameInput(appSettings.siteName);
     }
   }, [appSettings?.siteName]);
+
+  useEffect(() => {
+    setTaglineInput(appSettings?.tagline ?? '');
+  }, [appSettings?.tagline]);
 
   const updateSystemSettings = useMutation({
     mutationFn: ({ category, settings }: { category: string; settings: Record<string, unknown> }) =>
@@ -103,6 +108,13 @@ export function AppSettingsTab({ tabContentVariants }: AppSettingsTabProps) {
     updateSystemSettings.mutate({
       category: 'app',
       settings: { siteName: siteNameInput.trim() },
+    });
+  };
+
+  const handleSaveTagline = () => {
+    updateSystemSettings.mutate({
+      category: 'app',
+      settings: { tagline: taglineInput.trim() },
     });
   };
 
@@ -155,6 +167,44 @@ export function AppSettingsTab({ tabContentVariants }: AppSettingsTabProps) {
                   }
                   size="icon"
                   title="Save site name"
+                >
+                  <Check size={18} />
+                </Button>
+              </div>
+            </div>
+
+            {/* Tagline */}
+            <div className="space-y-2">
+              <Label htmlFor="site-tagline" className="text-base">
+                Tagline
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                A short line shown under the site name. Leave empty to hide it.
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  id="site-tagline"
+                  type="text"
+                  maxLength={120}
+                  className="flex-1 px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                  value={taglineInput}
+                  onChange={(e) => setTaglineInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSaveTagline();
+                    }
+                  }}
+                  disabled={updateSystemSettings.isPending}
+                  placeholder="The Flash arcade that never closed"
+                />
+                <Button
+                  onClick={handleSaveTagline}
+                  disabled={
+                    updateSystemSettings.isPending ||
+                    taglineInput.trim() === (appSettings?.tagline ?? '')
+                  }
+                  size="icon"
+                  title="Save tagline"
                 >
                   <Check size={18} />
                 </Button>

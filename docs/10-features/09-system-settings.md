@@ -69,6 +69,8 @@ CREATE TABLE system_settings (
 #### App Tab
 
 - **Site Name** - Customize application name
+- **Tagline** - Line shown under the site name in the portal header (default:
+  "The Flash arcade that never closed"; clear it to hide it)
 - **Maintenance Mode** - Enable/disable maintenance mode
 - **Default Theme** - Set default theme (light, dark, system)
 - **Default Primary Color** - Set default color scheme

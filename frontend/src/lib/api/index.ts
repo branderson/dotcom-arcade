@@ -5,6 +5,8 @@ export { apiClient } from './client';
 export { authApi } from './auth';
 
 export { gamesApi } from './games';
+export { discoveryApi } from './discovery';
+export type { DailyPick, PlaylistShelf } from './discovery';
 export { gameSavesApi } from './gameSaves';
 
 export { playlistsApi, communityPlaylistsApi } from './playlists';
@@ -39,7 +41,6 @@ export { jobsApi } from './jobs';
 
 export { ruffleApi } from './ruffle';
 
-export { githubApi } from './github';
 
 export { updatesApi } from './updates';
 export type {
