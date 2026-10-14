@@ -33,4 +33,9 @@ What changes:
 - **Streaming config.** Streaming is now part of the same compose file. Replace
   the separate `API_TOKEN` and `STREAMING_API_URL` with `STREAMING_API_TOKEN`
   and `COMPOSE_PROFILES=streaming` (see [Streaming](../10-features/13-streaming.md)).
-  The `/stream/` proxy route is unchanged.
+- **No separate `/stream/` route.** The app now proxies streams to the session
+  manager itself, and the session manager no longer publishes port 8081.
+  Remove any `location /stream/` block from your reverse proxy, or streams
+  will time out with a 504. Move its WebSocket and timeout settings to the
+  location that serves the app (see
+  [Reverse proxy](../10-features/13-streaming.md#reverse-proxy)).
