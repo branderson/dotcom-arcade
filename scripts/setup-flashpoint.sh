@@ -1,44 +1,55 @@
 #!/usr/bin/env bash
-# Downloads Flashpoint Ultimate and extracts it into a directory Dotcom Arcade
-# can serve. Safe to re-run: it resumes the download and skips archives it has
-# already extracted.
+# Extracts Flashpoint Ultimate into a directory Dotcom Arcade can serve, and
+# can download it first from a torrent you got from Flashpoint. Safe to re-run:
+# it resumes the download and skips archives it has already extracted.
 #
 #   scripts/setup-flashpoint.sh [options] /path/to/flashpoint
 #
 # Options:
-#   --downloads DIR    where the torrent downloads to (default: DEST/../downloads)
-#   --keep-archives    keep each archive after extracting it, to keep seeding;
-#                      needs room for both (about 4.6 TB for Ultimate 14)
-#   --skip-download    use archives already in the downloads directory
-#   --with-infinity    add Flashpoint Infinity for Linux's software, which
-#                      streaming needs (FPSoftware/, Server/)
+#   --torrent FILE     download Flashpoint Ultimate with aria2c, from the
+#                      .torrent file on https://flashpointarchive.org/downloads
+#   --downloads DIR    where the archives are or will be downloaded to
+#                      (default: DEST/../downloads)
+#   --infinity FILE    add the software streaming needs (FPSoftware/, Server/)
+#                      from Flashpoint Infinity for Linux (.7z, same page)
+#   --keep-archives    keep each archive after extracting it, e.g. to seed;
+#                      needs room for both copies
+#   --yes              don't ask for confirmation
 #
-# Requires aria2c (unless --skip-download) and 7-Zip (7z, 7zz or 7za).
+# Without --torrent, it uses the Ultimate archives already in the downloads
+# directory. Requires 7-Zip (7z, 7zz or 7za), and aria2c with --torrent.
+#
+# Flashpoint Ultimate is more than 2 TB. This script checks for the space
+# before it starts and refuses to run without it.
+#
+# Flashpoint Archive's legal standing is unsettled. You are responsible for
+# complying with copyright law where you live. This script contains no
+# download links: it only downloads from a torrent you supply.
 set -euo pipefail
 
-ULTIMATE_VERSION=14
-TORRENT_URL="https://download.unstable.life/FlashpointUltimate${ULTIMATE_VERSION}.torrent"
-INFINITY_URL="https://download.unstable.life/upload/fp14.0.3_lin_20251201.7z"
-INFINITY_SHA256=f393a98c5c35e229a744c102b0cb53270b1b4f1b3ebd40d604f98323444a4b1f
-# Free space to leave on the disk after each archive
+# Free space to leave on the disk after each archive, and headroom for the
+# largest archive being extracted while its zip still exists
 MARGIN=$((20 * 1024 ** 3))
+LARGEST_ARCHIVE=$((100 * 1024 ** 3))
 
 usage() {
-  sed -n '6,16p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '6,27p' "$0" | sed 's/^# \{0,1\}//'
   exit 1
 }
 
 DEST=
 DOWNLOADS=
+TORRENT=
+INFINITY=
 KEEP=false
-DOWNLOAD=true
-INFINITY=false
+YES=false
 while (($#)); do
   case $1 in
+    --torrent) TORRENT=${2:?}; shift ;;
     --downloads) DOWNLOADS=${2:?}; shift ;;
+    --infinity) INFINITY=${2:?}; shift ;;
     --keep-archives) KEEP=true ;;
-    --skip-download) DOWNLOAD=false ;;
-    --with-infinity) INFINITY=true ;;
+    --yes) YES=true ;;
     -h | --help) usage ;;
     -*) echo "Unknown option: $1" >&2; usage ;;
     *) DEST=$1 ;;
@@ -46,6 +57,8 @@ while (($#)); do
   shift
 done
 [[ -n $DEST ]] || usage
+[[ -z $TORRENT || -f $TORRENT ]] || { echo "No torrent file at $TORRENT" >&2; exit 1; }
+[[ -z $INFINITY || -f $INFINITY ]] || { echo "No Infinity archive at $INFINITY" >&2; exit 1; }
 mkdir -p "$DEST"
 DEST=$(cd "$DEST" && pwd)
 DOWNLOADS=${DOWNLOADS:-$(dirname "$DEST")/downloads}
@@ -53,8 +66,57 @@ mkdir -p "$DOWNLOADS"
 
 SEVENZIP=$(command -v 7zz || command -v 7z || command -v 7za || true)
 [[ -n $SEVENZIP ]] || { echo "7-Zip is required (7z, 7zz or 7za)" >&2; exit 1; }
+[[ -z $TORRENT ]] || command -v aria2c >/dev/null || { echo "aria2c is required for --torrent" >&2; exit 1; }
 
 gib() { echo "$(($1 / 1024 ** 3))G"; }
+free_bytes() { df --output=avail -B1 "$1" | tail -1; }
+same_disk() { [[ $(stat -c %d "$1") == $(stat -c %d "$2") ]]; }
+
+DONE=$DOWNLOADS/.extracted
+touch "$DONE"
+
+# What's left to extract, measured from the archives on disk
+remaining=0
+while IFS= read -r -d '' archive; do
+  grep -qxF "$(basename "$archive")" "$DONE" || remaining=$((remaining + $(stat -c %s "$archive")))
+done < <(find "$DOWNLOADS" -maxdepth 2 -name '*.zip' -print0)
+
+# The download's size, from the torrent
+download=0
+if [[ -n $TORRENT ]]; then
+  download=$(aria2c -S "$TORRENT" | awk -F'[()]' '/Total Length/ { gsub(/,/, "", $2); print $2; exit }')
+  [[ $download =~ ^[0-9]+$ ]] || { echo "Couldn't read the download's size from $TORRENT" >&2; exit 1; }
+  remaining=$download
+fi
+
+# Extracted files take about as much room as the archives. Unless they're
+# kept, each archive is deleted once extracted, so on a shared disk only the
+# largest one is ever stored twice.
+if $KEEP; then extra=$remaining; else extra=$((remaining < LARGEST_ARCHIVE ? remaining : LARGEST_ARCHIVE)); fi
+if same_disk "$DOWNLOADS" "$DEST"; then
+  checks=("$DEST:$((download + extra + MARGIN))")
+else
+  checks=("$DOWNLOADS:$((download + MARGIN))" "$DEST:$((remaining + MARGIN))")
+fi
+
+if ((remaining > 0)); then
+  echo "Flashpoint Ultimate is very large: about $(gib "$remaining") of game data."
+  short=false
+  for check in "${checks[@]}"; do
+    dir=${check%:*} need=${check##*:} avail=$(free_bytes "${check%:*}")
+    echo "  $dir needs about $(gib "$need"), has $(gib "$avail") free"
+    ((avail >= need)) || short=true
+  done
+  if $short; then
+    echo "Not enough free space. Free up room or choose another disk; see the README's hosting requirements." >&2
+    exit 1
+  fi
+  if ! $YES; then
+    [[ -t 0 ]] || { echo "Run with --yes to continue without a prompt." >&2; exit 1; }
+    read -r -p "This takes a day or more. Continue? [y/N] " answer
+    [[ $answer == [yY]* ]] || exit 1
+  fi
+fi
 
 # Extracts ARCHIVE into DEST, or only the entries listed in LIST if given.
 # Archives may wrap everything in one top-level folder (e.g. "Flashpoint
@@ -86,19 +148,16 @@ extract() {
 }
 
 # 1. Download the packed archives
-if $DOWNLOAD; then
-  command -v aria2c >/dev/null || { echo "aria2c is required to download" >&2; exit 1; }
-  echo "==> Downloading Flashpoint Ultimate ${ULTIMATE_VERSION} into $DOWNLOADS"
+if [[ -n $TORRENT ]]; then
+  echo "==> Downloading into $DOWNLOADS"
   aria2c --dir="$DOWNLOADS" --seed-time=0 --check-integrity=true \
-    --file-allocation=falloc --bt-max-peers=100 --follow-torrent=mem "$TORRENT_URL"
+    --file-allocation=falloc --bt-max-peers=100 "$TORRENT"
 fi
 # fp-index.json stays behind once the archives are extracted and deleted
 PACKED=$(find "$DOWNLOADS" -maxdepth 2 \( -name GameData_1.zip -o -name fp-index.json \) -printf '%h\n' | head -1)
 [[ -n $PACKED ]] || { echo "No Ultimate archives found under $DOWNLOADS" >&2; exit 1; }
 
 # 2. Extract the game data, images and htdocs, one archive at a time
-DONE=$DOWNLOADS/.extracted
-touch "$DONE"
 shopt -s nullglob
 for archive in "$PACKED"/Images_*.zip "$PACKED"/Htdocs_*.zip "$PACKED"/GameData_*.zip "$PACKED"/Extras_*.zip; do
   name=$(basename "$archive")
@@ -128,22 +187,16 @@ if [[ ! -f $DEST/preferences.json && -f $DEST/.preferences.defaults.json ]]; the
 fi
 
 # 4. Optionally add Infinity for Linux's software, without replacing anything
-if $INFINITY; then
-  infinity=$DOWNLOADS/$(basename "$INFINITY_URL")
-  if [[ ! -f $infinity ]]; then
-    echo "==> Downloading Flashpoint Infinity for Linux"
-    curl -fL --retry 3 -o "$infinity.part" "$INFINITY_URL"
-    mv "$infinity.part" "$infinity"
-  fi
-  echo "$INFINITY_SHA256  $infinity" | sha256sum -c --quiet
+if [[ -n $INFINITY ]]; then
+  echo "==> $(basename "$INFINITY")"
   staging=$DEST/.extracting
   rm -rf "$staging"
-  "$SEVENZIP" x -y -bso0 -bsp1 -o"$staging" "$infinity"
+  "$SEVENZIP" x -y -bso0 -bsp1 -o"$staging" "$INFINITY"
   root=$(dirname "$(find "$staging" -maxdepth 3 -name version.txt | head -1)")
   cp -an "$root/." "$DEST/"
   rm -rf "$staging"
 fi
 
 [[ -f $DEST/Data/flashpoint.sqlite ]] ||
-  echo "Warning: no Data/flashpoint.sqlite. Re-run with --with-infinity to take Infinity's." >&2
+  echo "Warning: no Data/flashpoint.sqlite. Re-run with --infinity to take Infinity's." >&2
 echo "Done. Set FLASHPOINT_HOST_PATH=$DEST in .env."
