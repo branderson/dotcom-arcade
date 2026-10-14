@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { SessionError, SessionManager } from '../src/sessions.ts';
-import { catalog, FakeDriver, fastTimings, sleep } from './fakes.ts';
+import { catalog, FakeDriver, fastTimings, MemoryLog, sleep } from './fakes.ts';
 
 test('rejects unstreamable games and enforces the session cap', async () => {
   const sessions = new SessionManager(new FakeDriver(), catalog, 1, fastTimings);
@@ -57,4 +57,28 @@ test('starts with the given saves, pushes changes, and ends with a final push', 
   driver.containers.get(id)!.saves['cookies.txt'] = 'Yw==';
   await sessions.teardown(id);
   assert.deepEqual(seen, [{ 'cookies.txt': 'YQ==' }, { 'cookies.txt': 'Yg==' }, { 'cookies.txt': 'Yw==' }, null]);
+});
+
+test('logs a session from creation to removal', async () => {
+  const log = new MemoryLog();
+  const sessions = new SessionManager(new FakeDriver(), catalog, 4, fastTimings, log);
+  const { id } = await sessions.create('java');
+  await sessions.start(id, {});
+  await sessions.teardown(id, 'player left');
+  assert.equal(log.lines.length, 3);
+  assert.match(log.lines[0], new RegExp(`Session ${id}: created for game java at 472x354`));
+  assert.match(log.lines[1], /ready in \d+\.\ds/);
+  assert.match(log.lines[2], /removing \(player left\)/);
+});
+
+test('reports a streamer that fails to start, and removes it', async () => {
+  const driver = new FakeDriver();
+  driver.failStart = new Error('streamer exited with code 1; last output:\nno display');
+  const log = new MemoryLog();
+  const sessions = new SessionManager(driver, catalog, 4, fastTimings, log);
+  const { id } = await sessions.create('java');
+  await assert.rejects(sessions.start(id, {}), (e: SessionError) => e.status === 502);
+  assert.equal(sessions.has(id), false);
+  assert.deepEqual(driver.removed, [id]);
+  assert.ok(log.lines.some((line) => line.includes('failed to start: streamer exited with code 1') && line.includes('no display')));
 });

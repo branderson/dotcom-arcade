@@ -25,6 +25,7 @@ export interface DockerDriverOptions {
 const LABEL = 'flashpoint.stream-session';
 const HOME = '/config';
 const READY_TIMEOUT_MS = 60_000;
+const LOG_LINES = 30;
 
 export class DockerDriver implements Driver {
   private readonly docker = new Docker();
@@ -56,7 +57,8 @@ export class DockerDriver implements Driver {
         Binds: [`${flashpointHostPath}:/flashpoint:ro`],
         NetworkMode: network,
         ShmSize: 1024 ** 3,
-        AutoRemove: true,
+        // Not auto-removed, so a container that crashes keeps its output to
+        // report; teardown removes it, and removeAll clears leftovers
       },
     });
   }
@@ -67,7 +69,22 @@ export class DockerDriver implements Driver {
       await container.putArchive(await toTar(saves, this.options.uid, this.options.gid), { path: HOME });
     }
     await container.start();
-    await waitForHttp(this.url(id) + streamPath(id), READY_TIMEOUT_MS);
+    const url = this.url(id) + streamPath(id);
+    try {
+      await waitUntilReady(
+        () => fetch(url).then((res) => res.ok, () => false),
+        async () => {
+          const { State } = await container.inspect();
+          return State.Running ? null : State.ExitCode;
+        },
+        READY_TIMEOUT_MS,
+      );
+    } catch (err) {
+      const output = await container
+        .logs({ stdout: true, stderr: true, tail: LOG_LINES })
+        .then((logs) => dockerLogText(logs as unknown as Buffer), () => '');
+      throw new Error(`${(err as Error).message}${output ? `; last output:\n${output}` : ''}`);
+    }
   }
 
   async getSaves(id: string): Promise<SaveFiles> {
@@ -112,14 +129,44 @@ function containerName(id: string): string {
   return `fp-stream-${id}`;
 }
 
-async function waitForHttp(url: string, timeoutMs: number): Promise<void> {
+/**
+ * Polls until `ready` is true, failing early once `exitCode` reports that the
+ * container has stopped (a number) rather than still running (null).
+ */
+export async function waitUntilReady(
+  ready: () => Promise<boolean>,
+  exitCode: () => Promise<number | null>,
+  timeoutMs: number,
+  intervalMs = 500,
+): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const ok = await fetch(url).then((res) => res.ok, () => false);
-    if (ok) {
+    if (await ready()) {
       return;
     }
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const code = await exitCode();
+    if (code !== null) {
+      throw new Error(`streamer exited with code ${code}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
-  throw new Error(`timed out waiting for ${url}`);
+  throw new Error(`streamer not ready after ${timeoutMs / 1000}s`);
+}
+
+/**
+ * Turns Docker's log output into text. Without a TTY, each chunk is framed by
+ * an 8-byte header: stream type, three zero bytes, then the big-endian length.
+ */
+export function dockerLogText(logs: Buffer): string {
+  const framed = logs.length >= 8 && logs[0] <= 2 && logs[1] === 0 && logs[2] === 0 && logs[3] === 0;
+  if (!framed) {
+    return logs.toString('utf8').trimEnd();
+  }
+  const chunks: Buffer[] = [];
+  for (let i = 0; i + 8 <= logs.length; ) {
+    const length = logs.readUInt32BE(i + 4);
+    chunks.push(logs.subarray(i + 8, i + 8 + length));
+    i += 8 + length;
+  }
+  return Buffer.concat(chunks).toString('utf8').trimEnd();
 }

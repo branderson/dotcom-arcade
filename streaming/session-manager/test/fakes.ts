@@ -9,6 +9,8 @@ import type { SaveFiles } from '../src/saves.ts';
 export class FakeDriver implements Driver {
   readonly containers = new Map<string, { gameId: string; size: Size; saves: SaveFiles; started: boolean }>();
   readonly removed: string[] = [];
+  /** Makes start() fail with this error, as a crashing streamer would */
+  failStart?: Error;
   private server?: http.Server;
 
   async listen(): Promise<void> {
@@ -27,6 +29,9 @@ export class FakeDriver implements Driver {
   }
 
   async start(id: string, saves: SaveFiles): Promise<void> {
+    if (this.failStart) {
+      throw this.failStart;
+    }
     Object.assign(this.containers.get(id)!, { saves: { ...saves }, started: true });
   }
 
@@ -51,6 +56,13 @@ export const catalog = {
     return gameId === 'java' || gameId === '247a4c93-c252-49c8-8bc9-fb43d5c039df' ? { width: 472, height: 354 } : null;
   },
 };
+
+/** Collects log lines instead of printing them */
+export class MemoryLog {
+  readonly lines: string[] = [];
+  log = (...args: unknown[]) => void this.lines.push(args.join(' '));
+  error = (...args: unknown[]) => void this.lines.push(args.join(' '));
+}
 
 export const fastTimings = { connectTimeoutMs: 300, idleGraceMs: 100, savesPollMs: 20 };
 

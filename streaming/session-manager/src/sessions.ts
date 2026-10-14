@@ -12,6 +12,9 @@ export interface SessionTimings {
   savesPollMs: number;
 }
 
+/** Where lifecycle events and failures are reported. */
+export type Log = Pick<Console, 'log' | 'error'>;
+
 export const DEFAULT_TIMINGS: SessionTimings = {
   connectTimeoutMs: 120_000,
   idleGraceMs: 30_000,
@@ -46,17 +49,20 @@ export class SessionManager {
   private readonly catalog: Pick<GameCatalog, 'streamSize'>;
   private readonly maxSessions: number;
   private readonly timings: SessionTimings;
+  private readonly log: Log;
 
   constructor(
     driver: Driver,
     catalog: Pick<GameCatalog, 'streamSize'>,
     maxSessions: number,
     timings: SessionTimings = DEFAULT_TIMINGS,
+    log: Log = console,
   ) {
     this.driver = driver;
     this.catalog = catalog;
     this.maxSessions = maxSessions;
     this.timings = timings;
+    this.log = log;
   }
 
   async create(gameId: string): Promise<{ id: string; size: Size }> {
@@ -76,7 +82,8 @@ export class SessionManager {
       this.sessions.delete(id);
       throw err;
     }
-    this.scheduleTeardown(session, this.timings.connectTimeoutMs);
+    this.log.log(`Session ${id}: created for game ${gameId} at ${size.width}x${size.height}`);
+    this.scheduleTeardown(session, this.timings.connectTimeoutMs, 'nobody connected');
     return { id, size };
   }
 
@@ -92,13 +99,16 @@ export class SessionManager {
     }
     session.state = 'starting';
     session.saves = canonical(saves);
+    const started = Date.now();
     try {
       await this.driver.start(id, saves);
     } catch (err) {
-      await this.teardown(id);
-      throw err;
+      this.log.error(`Session ${id}: failed to start: ${(err as Error).message}`);
+      await this.teardown(id, 'failed to start');
+      throw new SessionError(502, 'game failed to start');
     }
     session.state = 'running';
+    this.log.log(`Session ${id}: ready in ${((Date.now() - started) / 1000).toFixed(1)}s`);
     this.startPolling(session);
   }
 
@@ -113,7 +123,7 @@ export class SessionManager {
   socketClosed(id: string): void {
     const session = this.sessions.get(id);
     if (session && --session.sockets === 0) {
-      this.scheduleTeardown(session, this.timings.idleGraceMs);
+      this.scheduleTeardown(session, this.timings.idleGraceMs, 'player left');
     }
   }
 
@@ -125,11 +135,12 @@ export class SessionManager {
     return () => session.listeners.delete(listener);
   }
 
-  async teardown(id: string): Promise<void> {
+  async teardown(id: string, reason = 'requested'): Promise<void> {
     const session = this.sessions.get(id);
     if (!session) {
       return;
     }
+    this.log.log(`Session ${id}: removing (${reason})`);
     this.sessions.delete(id);
     clearTimeout(session.teardownTimer);
     clearInterval(session.pollTimer);
@@ -143,7 +154,7 @@ export class SessionManager {
   }
 
   async teardownAll(): Promise<void> {
-    await Promise.all([...this.sessions.keys()].map((id) => this.teardown(id)));
+    await Promise.all([...this.sessions.keys()].map((id) => this.teardown(id, 'shutting down')));
   }
 
   private get(id: string): Session {
@@ -154,16 +165,16 @@ export class SessionManager {
     return session;
   }
 
-  private scheduleTeardown(session: Session, delayMs: number): void {
+  private scheduleTeardown(session: Session, delayMs: number, reason: string): void {
     clearTimeout(session.teardownTimer);
     session.teardownTimer = setTimeout(() => {
-      this.teardown(session.id).catch((err) => console.error(`Failed to tear down ${session.id}:`, err));
+      this.teardown(session.id, reason).catch((err) => this.log.error(`Session ${session.id}: failed to remove:`, err));
     }, delayMs);
   }
 
   private startPolling(session: Session): void {
     session.pollTimer = setInterval(() => {
-      this.pollSaves(session).catch((err) => console.error(`Failed to read saves for ${session.id}:`, err));
+      this.pollSaves(session).catch((err) => this.log.error(`Session ${session.id}: failed to read saves:`, err));
     }, this.timings.savesPollMs);
   }
 
