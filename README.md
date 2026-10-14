@@ -95,11 +95,24 @@ Re-run it to resume after an interruption.
 sudo apt install aria2 7zip tmux
 tmux new -s flashpoint
 scripts/setup-flashpoint.sh --torrent FlashpointUltimate14.torrent \
-  --infinity fp14.0.3_lin_20251201.7z /srv/flashpoint
+  --infinity fp14.0.3_lin_20251201.7z --seed-ratio 1.0 /srv/flashpoint
 ```
 
-`--keep-archives` keeps the archives so you can keep seeding, which needs room
-for both copies.
+#### Please seed
+
+Flashpoint Ultimate is shared over BitTorrent, and stays available only as long
+as people seed it. If you can, give back at least what you downloaded:
+
+- **Seed before extracting.** `--seed-ratio 1.0` keeps seeding after the
+  download until you've uploaded as much as you downloaded. `--seed-hours 24`
+  seeds for a day. With both, seeding stops at whichever comes first. This needs
+  no extra disk space, but extraction waits until seeding stops.
+- **Seed for the long term.** `--keep-archives` keeps the archives after
+  extracting (about 4.6 TB in total), so a torrent client such as qBittorrent or
+  Transmission can go on seeding the downloads directory.
+- **Let peers reach you.** The download listens on ports 6881-6999, TCP and UDP.
+  Forwarding them on your router and allowing them through your firewall lets
+  more people download from you.
 
 ### 2. Configure
 

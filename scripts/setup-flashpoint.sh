@@ -12,9 +12,16 @@
 #                      (default: DEST/../downloads)
 #   --infinity FILE    add the software streaming needs (FPSoftware/, Server/)
 #                      from Flashpoint Infinity for Linux (.7z, same page)
-#   --keep-archives    keep each archive after extracting it, e.g. to seed;
-#                      needs room for both copies
+#   --seed-ratio N     after downloading, keep seeding until N times the
+#                      download has been uploaded (e.g. 1.0), then extract
+#   --seed-hours N     after downloading, keep seeding for up to N hours, then
+#                      extract; with --seed-ratio, whichever comes first
+#   --keep-archives    keep each archive after extracting it, e.g. to go on
+#                      seeding with a torrent client; needs room for both copies
 #   --yes              don't ask for confirmation
+#
+# Seeding helps keep Flashpoint's torrent alive for everyone. Seeding before
+# extracting needs no extra disk space.
 #
 # Without --torrent, it uses the Ultimate archives already in the downloads
 # directory. Requires 7-Zip (7z, 7zz or 7za), and aria2c with --torrent.
@@ -33,7 +40,7 @@ MARGIN=$((20 * 1024 ** 3))
 LARGEST_ARCHIVE=$((100 * 1024 ** 3))
 
 usage() {
-  sed -n '6,27p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '6,34p' "$0" | sed 's/^# \{0,1\}//'
   exit 1
 }
 
@@ -43,11 +50,15 @@ TORRENT=
 INFINITY=
 KEEP=false
 YES=false
+SEED_RATIO=
+SEED_HOURS=
 while (($#)); do
   case $1 in
     --torrent) TORRENT=${2:?}; shift ;;
     --downloads) DOWNLOADS=${2:?}; shift ;;
     --infinity) INFINITY=${2:?}; shift ;;
+    --seed-ratio) SEED_RATIO=${2:?}; shift ;;
+    --seed-hours) SEED_HOURS=${2:?}; shift ;;
     --keep-archives) KEEP=true ;;
     --yes) YES=true ;;
     -h | --help) usage ;;
@@ -57,6 +68,14 @@ while (($#)); do
   shift
 done
 [[ -n $DEST ]] || usage
+# aria2c reads a ratio of 0 as "seed forever", which would never get to extracting
+[[ -z $SEED_RATIO || ($SEED_RATIO =~ ^[0-9]+(\.[0-9]+)?$ && $SEED_RATIO =~ [1-9]) ]] ||
+  { echo "--seed-ratio takes a number above 0, e.g. 1.0" >&2; exit 1; }
+[[ -z $SEED_HOURS || $SEED_HOURS =~ ^[0-9]+$ ]] || { echo "--seed-hours takes a whole number of hours" >&2; exit 1; }
+if [[ -z $TORRENT && -n $SEED_RATIO$SEED_HOURS ]]; then
+  echo "Seeding needs --torrent" >&2
+  exit 1
+fi
 [[ -z $TORRENT || -f $TORRENT ]] || { echo "No torrent file at $TORRENT" >&2; exit 1; }
 [[ -z $INFINITY || -f $INFINITY ]] || { echo "No Infinity archive at $INFINITY" >&2; exit 1; }
 mkdir -p "$DEST"
@@ -74,6 +93,12 @@ same_disk() { [[ $(stat -c %d "$1") == $(stat -c %d "$2") ]]; }
 
 DONE=$DOWNLOADS/.extracted
 touch "$DONE"
+# Once extraction has started, extracted archives are deleted; downloading
+# again would fetch them all over
+if [[ -n $TORRENT && -s $DONE ]]; then
+  echo "Extraction already started; continuing it without downloading."
+  TORRENT=
+fi
 
 # What's left to extract, measured from the archives on disk
 remaining=0
@@ -149,8 +174,17 @@ extract() {
 
 # 1. Download the packed archives
 if [[ -n $TORRENT ]]; then
-  echo "==> Downloading into $DOWNLOADS"
-  aria2c --dir="$DOWNLOADS" --seed-time=0 --check-integrity=true \
+  # aria2c stops seeding at whichever limit it reaches first; with neither, it
+  # stops as soon as the download completes
+  seed=(--seed-time=0)
+  if [[ -n $SEED_RATIO || -n $SEED_HOURS ]]; then
+    seed=(--seed-ratio="${SEED_RATIO:-0.0}")
+    [[ -z $SEED_HOURS ]] || seed+=(--seed-time="$((SEED_HOURS * 60))")
+    echo "==> Downloading into $DOWNLOADS, then seeding (${SEED_RATIO:+ratio $SEED_RATIO}${SEED_RATIO:+${SEED_HOURS:+, }}${SEED_HOURS:+up to $SEED_HOURS hours})"
+  else
+    echo "==> Downloading into $DOWNLOADS"
+  fi
+  aria2c --dir="$DOWNLOADS" "${seed[@]}" --check-integrity=true \
     --file-allocation=falloc --bt-max-peers=100 "$TORRENT"
 fi
 # fp-index.json stays behind once the archives are extracted and deleted
@@ -200,3 +234,6 @@ fi
 [[ -f $DEST/Data/flashpoint.sqlite ]] ||
   echo "Warning: no Data/flashpoint.sqlite. Re-run with --infinity to take Infinity's." >&2
 echo "Done. Set FLASHPOINT_HOST_PATH=$DEST in .env."
+if [[ -n $TORRENT && -z $SEED_RATIO$SEED_HOURS ]]; then
+  echo "Consider seeding next time (--seed-ratio 1.0, or --seed-hours 24) to help keep Flashpoint's torrent alive."
+fi
