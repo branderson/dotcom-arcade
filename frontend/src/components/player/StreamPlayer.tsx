@@ -45,12 +45,14 @@ export function StreamPlayer({ gameId, title, swfUrl }: StreamPlayerProps) {
       if (cancelled) return;
 
       events = new EventSource(`${session.path}_fp/saves`);
+      let previous = files;
       events.onmessage = (event) => {
         const { files: latest } = JSON.parse(event.data);
         storeSaves(gameId, latest).catch((error) =>
           logger.error('[StreamPlayer] Failed to store saves:', error)
         );
-        if (flash) mirrorToRuffle(latest, flash);
+        if (flash) mirrorToRuffle(latest, previous, flash);
+        previous = latest;
       };
       events.addEventListener('end', () => events?.close());
       setState({ status: 'running', path: session.path });

@@ -46,7 +46,18 @@ the stream starts with:
   have yet, such as progress made only in the stream. The game then loads that
   progress instead of starting a fresh save, which would otherwise replace the
   stream's progress on the next switch. Saves Ruffle already has are left alone.
-- While the stream plays, its saves are copied into Ruffle as they change.
+- While the stream plays, the saves it changes are copied into Ruffle.
+
+Some games save under a different path in each player. A SWF that a wrapper
+(such as MochiAds) loads from memory saves under its loader's path plus
+`[[DYNAMIC]]/<n>`, and a wrapper may do that in Ruffle but not in the
+standalone Flash Player. Bloons, for example, keeps its progress under
+`bloons.swf/[[DYNAMIC]]/1/` in Ruffle and under `bloons.swf/` in Flash Player.
+Saves that differ only by that step are treated as one save:
+
+- When the stream starts, a save is written to every path the stream has for
+  it. If Ruffle has both a dynamic and a plain copy, the dynamic one is used.
+- A save the stream changes is copied to every key Ruffle has for it.
 
 A stream save replaced this way is still in the account's backups.
 
