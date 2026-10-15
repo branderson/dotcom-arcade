@@ -49,16 +49,28 @@ case ${app,,} in
     if [[ ${app,,} == 'fpsoftware\flash\'* ]]; then
       # Hide the projector's menu bar by moving it above the display, and fill
       # the display with the movie. Not full screen, which some games, such as
-      # Bloons, don't play right in. The window opens at the movie's size plus
-      # the menu bar, which gives the menu bar's height.
+      # Bloons, don't play right in. The window manager keeps windows on
+      # screen, so the window is taken out of its hands first.
       (
+        set +eo pipefail
         wid=$(xdotool search --sync --onlyvisible --name 'Flash Player' | head -1)
-        eval "$(xdotool getwindowgeometry --shell "$wid")"
-        read -r display_width display_height < <(xdotool getdisplaygeometry)
-        menu=$((HEIGHT - ${GAME_HEIGHT:-$display_height}))
-        ((menu > 0 && menu < 100)) || menu=0
-        xdotool windowsize "$wid" "$display_width" $((display_height + menu)) \
-          windowmove "$wid" 0 $((-menu)) windowactivate "$wid"
+        read -r width height < <(xdotool getdisplaygeometry)
+        # GTK draws the menu bar in the window itself, and the movie in the
+        # largest child window, below it: the movie's offset is the menu bar's height
+        menu=$(xwininfo -children -id "$wid" | awk '
+          match($0, /[0-9]+x[0-9]+\+-?[0-9]+\+-?[0-9]+/) {
+            split(substr($0, RSTART, RLENGTH), g, /[x+]/)
+            if (g[1] * g[2] > area) { area = g[1] * g[2]; top = g[4] }
+          }
+          END { print top + 0 }')
+        ((menu >= 0 && menu < height)) || menu=0
+        echo "Flash Player window $wid: menu bar ${menu}px, display ${width}x${height}"
+        xdotool windowunmap --sync "$wid"
+        xdotool set_window --overrideredirect 1 "$wid"
+        xdotool windowmap --sync "$wid"
+        xdotool windowsize "$wid" "$width" $((height + menu)) \
+          windowmove "$wid" 0 $((-menu)) windowfocus "$wid"
+        xdotool getwindowgeometry "$wid"
       ) &
     fi
     cd "${argv[0]}"
