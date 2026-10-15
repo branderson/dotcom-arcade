@@ -68,9 +68,20 @@ case ${app,,} in
         xdotool windowunmap --sync "$wid"
         xdotool set_window --overrideredirect 1 "$wid"
         xdotool windowmap --sync "$wid"
-        xdotool windowsize "$wid" "$width" $((height + menu)) \
-          windowmove "$wid" 0 $((-menu)) windowfocus "$wid"
-        xdotool getwindowgeometry "$wid"
+        place() { xdotool windowsize "$wid" "$width" $((height + menu)) windowmove "$wid" 0 $((-menu)); }
+        place
+        xdotool windowfocus "$wid"
+        # Flash Player moves its window back once the movie has loaded, so it's
+        # kept in place for as long as it's open
+        moves=0
+        while geometry=$(xdotool getwindowgeometry --shell "$wid" 2>/dev/null); do
+          eval "$geometry"
+          if ((X != 0 || Y != -menu || WIDTH != width || HEIGHT != height + menu)); then
+            ((++moves <= 3)) && echo "Flash Player window moved to $X,$Y (${WIDTH}x${HEIGHT}); putting it back"
+            place
+          fi
+          sleep 0.5
+        done
       ) &
     fi
     cd "${argv[0]}"

@@ -57,5 +57,6 @@ stretched to the display and moved up by its menu bar's height, which hides the
 menu bar. GTK draws the menu bar in the window itself and the movie in a child
 window below it, so the movie's offset, read with `xwininfo`, is the menu bar's
 height. The window is made override-redirect first, since the window manager
-keeps windows on screen. Its full-screen mode isn't used, since some games, such
+keeps windows on screen, and is kept in place while it's open, since Flash
+Player moves it back once the movie has loaded. Its full-screen mode isn't used, since some games, such
 as Bloons, don't play right in it. Flashpoint Navigator's toolbars are hidden.
