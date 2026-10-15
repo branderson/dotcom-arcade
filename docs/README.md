@@ -126,6 +126,7 @@ for Flashpoint Ultimate.
 - [Debugging](08-development/debugging.md) - Debugging tips
 - [Common Pitfalls](08-development/common-pitfalls.md) - Known issues
 - [Upstream Sync](08-development/upstream-sync.md) - Merging changes from flashpoint-web
+- [GitHub Mirror](08-development/github-mirror.md) - Publishing to GitHub and GHCR
 
 ### 09. Deployment
 

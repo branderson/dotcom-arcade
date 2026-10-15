@@ -28,17 +28,28 @@ All three are built from this repository by `docker compose up -d --build`.
 
 ### Prebuilt images
 
-To pull published images instead of building, set `IMAGE_PREFIX` in `.env` to
-the registry path they live under, ending in `/`, and optionally `IMAGE_TAG`:
+Images are published to GitHub's container registry. To pull them instead of
+building, set `IMAGE_PREFIX` in `.env`, ending in `/`, and optionally
+`IMAGE_TAG`. `latest` is the newest release, `1.2` the newest of a minor
+version, and `main` follows the `main` branch.
 
 ```sh
-IMAGE_PREFIX=registry.example.com/owner/
+IMAGE_PREFIX=ghcr.io/branderson/
 IMAGE_TAG=latest
 ```
 
-Then run `docker compose pull && docker compose up -d`.
+Then run `docker compose pull && docker compose up -d`. Images from another
+registry work the same way, with its path as the prefix.
 
 ### Publishing images
+
+Two workflows build the same images with the same tags:
+
+- `.github/workflows/images.yml` runs on the
+  [GitHub mirror](../08-development/github-mirror.md) and pushes to
+  `ghcr.io/<owner>/` with the workflow's own token. It needs no setup.
+- `.gitea/workflows/images.yml` runs on the forge. Gitea ignores
+  `.github/workflows` while `.gitea/workflows` exists.
 
 `.gitea/workflows/images.yml` builds all three images on Gitea Actions and
 pushes them to the Gitea instance's container registry, under the repository's

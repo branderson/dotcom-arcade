@@ -135,6 +135,9 @@ PGID=1000
 docker compose up -d --build
 ```
 
+To pull prebuilt images instead of building them, see
+[prebuilt images](docs/09-deployment/docker-deployment.md#prebuilt-images).
+
 Open `http://<server>/` and create the admin account. On first start the app
 indexes the collection, which takes a few minutes on a full Ultimate install.
 Under **Settings → App** you can set the site name and tagline.
