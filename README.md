@@ -192,6 +192,11 @@ and development. Useful starting points:
 - [Ruffle](https://ruffle.rs/), for running Flash in modern browsers.
 - [Selkies](https://github.com/selkies-project/selkies), which streams the
   games.
+- [Texgriddy](https://github.com/Weestuarty/texgriddy-es-de) by Weestuarty, an
+  ES-DE theme that inspired the site's look. The look was recreated from scratch
+  in CSS; none of Texgriddy's files, images or fonts are used.
+- [Fredoka](https://fontsource.org/fonts/fredoka) (SIL Open Font License), the
+  display font.
 
 ## Legal
 

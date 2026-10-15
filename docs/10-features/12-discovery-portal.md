@@ -30,8 +30,14 @@ tokens are applied to `<body>` while the portal is mounted, which takes
 precedence over the app theme on `<html>` and also reaches dialogs and menus
 rendered into the body.
 
-One scheme ships, **Chilled** (slate background, sage boxes). Adding a scheme
+One scheme ships, **Slate** (slate background, sage boxes). Adding a scheme
 means adding an entry to `PORTAL_SCHEMES`; no component changes are needed.
+
+The portal's look is inspired by
+[Texgriddy](https://github.com/Weestuarty/texgriddy-es-de), an ES-DE theme by
+Weestuarty: the framed page, glossy tiles with a metallic ring, outlined info
+boxes, capsule buttons and the slate and sage palette. It was recreated from
+scratch in CSS; none of Texgriddy's files, images or fonts are used.
 
 Display text uses Fredoka (OFL, bundled via `@fontsource-variable/fredoka`);
 body text uses Verdana.
