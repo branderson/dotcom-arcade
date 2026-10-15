@@ -52,6 +52,8 @@ writable mirror of the install, since they write beside themselves; a
 Director projector's `Prefs`, where it saves, is linked into `/config/saves`, as
 is Flash Player's save directory, so the session manager syncs both to the
 player's browser. OldCPUSimulator hangs under Wine, so its target runs under
-`cpulimit` at the same share of the CPU. Flash projectors switch to full screen,
-which hides their menu bar and scales the movie to the display, and Flashpoint
-Navigator's toolbars are hidden.
+`cpulimit` at the same share of the CPU. A Flash projector's window is
+stretched to the display and moved up by its menu bar's height, which hides the
+menu bar; the height is the window's opening height less the movie's
+(`GAME_HEIGHT`). Its full-screen mode isn't used, since some games, such as
+Bloons, don't play right in it. Flashpoint Navigator's toolbars are hidden.
