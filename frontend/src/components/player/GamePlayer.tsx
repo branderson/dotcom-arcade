@@ -14,6 +14,7 @@ import { RufflePlayer } from './RufflePlayer';
 import { StreamPlayer } from './StreamPlayer';
 import { SavesDialog } from './SavesDialog';
 import { useGameSaveSync } from '@/hooks/useGameSaveSync';
+import { addStreamSavesToRuffle } from '@/lib/saves/flashSaves';
 import { useAuthStore } from '@/store/auth';
 import { PlayerErrorBoundary } from './PlayerErrorBoundary';
 import { PlatformIcon } from '@/components/ui/platform-icon';
@@ -137,6 +138,41 @@ function GamePlayerInternal({
     }
   }, [contentUrl, platform]);
 
+  // Determine Flash content type: direct SWF vs HTML wrapper
+  // HTML wrappers (index.html, .html, .htm) need iframe, not Ruffle
+  const flashContentType = useMemo(() => {
+    if (platform !== 'Flash' || !contentUrl) return null;
+
+    const urlPath = contentUrl.toLowerCase();
+    const isSwfUrl = urlPath.includes('.swf');
+    const isHtmlWrapper =
+      urlPath.includes('.html') || urlPath.includes('.htm') || urlPath.endsWith('/');
+
+    if (isSwfUrl && !isHtmlWrapper) {
+      return 'swf' as const;
+    }
+    return 'html-wrapper' as const;
+  }, [platform, contentUrl]);
+
+  // Before Ruffle starts, it gets any saves the streamed Flash Player made that
+  // it doesn't have yet. Otherwise a game played only streamed would start from
+  // scratch here, and that fresh save would replace its progress on the next switch.
+  const ruffleSwf = gameId && flashContentType === 'swf' && contentUrl ? contentUrl : null;
+  const [ruffleSavesEpoch, setRuffleSavesEpoch] = useState<number | null>(null);
+  useEffect(() => {
+    if (!saveSync.ready || !ruffleSwf || !gameId) return;
+    let cancelled = false;
+    addStreamSavesToRuffle(gameId, ruffleSwf)
+      .catch((error) => logger.error('[GamePlayer] Failed to copy stream saves to Ruffle:', error))
+      .finally(() => {
+        if (!cancelled) setRuffleSavesEpoch(saveSync.epoch);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [saveSync.ready, saveSync.epoch, ruffleSwf, gameId]);
+  const ruffleSavesReady = !ruffleSwf || ruffleSavesEpoch === saveSync.epoch;
+
   const canSwitchPlayer = canPlayInBrowser && streamable && Boolean(gameId);
   const isStreamed = streamable && Boolean(gameId) && (!canPlayInBrowser || preferStream);
 
@@ -177,22 +213,6 @@ function GamePlayerInternal({
   const containerClasses = isFullscreen ? 'fixed inset-0 z-50 bg-black' : className;
 
   const isAspectVideo = height === 'aspect-video';
-
-  // Determine Flash content type: direct SWF vs HTML wrapper
-  // HTML wrappers (index.html, .html, .htm) need iframe, not Ruffle
-  const flashContentType = useMemo(() => {
-    if (platform !== 'Flash' || !contentUrl) return null;
-
-    const urlPath = contentUrl.toLowerCase();
-    const isSwfUrl = urlPath.includes('.swf');
-    const isHtmlWrapper =
-      urlPath.includes('.html') || urlPath.includes('.htm') || urlPath.endsWith('/');
-
-    if (isSwfUrl && !isHtmlWrapper) {
-      return 'swf' as const;
-    }
-    return 'html-wrapper' as const;
-  }, [platform, contentUrl]);
 
   return (
     <div className={`${containerClasses} ${isAspectVideo ? 'flex flex-col' : ''}`}>
@@ -327,7 +347,7 @@ function GamePlayerInternal({
               }
         }
       >
-        {!saveSync.ready ? (
+        {!saveSync.ready || (!isStreamed && !ruffleSavesReady) ? (
           <div className="flex items-center justify-center h-full gap-3 text-muted-foreground">
             <Loader2 className="animate-spin" aria-hidden="true" />
             <span>Loading your save...</span>
@@ -336,7 +356,11 @@ function GamePlayerInternal({
           <Fragment key={saveSync.epoch}>
             {/* Other platforms - stream from the server */}
             {isStreamed && gameId ? (
-              <StreamPlayer gameId={gameId} title={title} />
+              <StreamPlayer
+                gameId={gameId}
+                title={title}
+                swfUrl={flashContentType === 'swf' ? contentUrl : undefined}
+              />
             ) : /* Flash SWF - use Ruffle emulator */ flashContentType === 'swf' && contentUrl ? (
               <RufflePlayer
                 swfUrl={contentUrl}

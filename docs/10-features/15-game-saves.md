@@ -22,6 +22,45 @@ The app works it out by watching instead: whatever changes while a game is
 playing belongs to that game, and it remembers that for next time. The app's own
 storage is never included.
 
+## Ruffle and the original Flash Player
+
+A Flash game's saves carry over when switching between Ruffle and the original
+Flash Player (streamed). Both store SharedObjects in the same `.sol` format,
+under different names:
+
+- Ruffle keeps them in localStorage, keyed by the site's host and the path it
+  loaded the SWF from.
+- Flash Player keeps them as files under `Flash_Player/#SharedObjects/` in the
+  streamed game's saves, keyed by the SWF's own host and path.
+
+Starting the original Flash Player adds the game's Ruffle saves to the files the
+stream starts with. While it plays, its saves are copied back into Ruffle's
+storage as they change. Saves made with a `localPath` of `/` are shared by
+every game in Ruffle, so only those seen changing while this game ran are
+carried over.
+
+Ruffle's copy of a save is kept up to date in both directions, so it's the one
+the stream starts with:
+
+- Before Ruffle starts a game, it's given any of the stream's saves it doesn't
+  have yet, such as progress made only in the stream. The game then loads that
+  progress instead of starting a fresh save, which would otherwise replace the
+  stream's progress on the next switch. Saves Ruffle already has are left alone.
+- While the stream plays, the saves it changes are copied into Ruffle.
+
+Some games save under a different path in each player. A SWF that a wrapper
+(such as MochiAds) loads from memory saves under its loader's path plus
+`[[DYNAMIC]]/<n>`, and a wrapper may do that in Ruffle but not in the
+standalone Flash Player. Bloons, for example, keeps its progress under
+`bloons.swf/[[DYNAMIC]]/1/` in Ruffle and under `bloons.swf/` in Flash Player.
+Saves that differ only by that step are treated as one save:
+
+- When the stream starts, a save is written to every path the stream has for
+  it. If Ruffle has both a dynamic and a plain copy, the dynamic one is used.
+- A save the stream changes is copied to every key Ruffle has for it.
+
+A stream save replaced this way is still in the account's backups.
+
 ## Sync
 
 Before a game starts, the app compares the browser's save with the account's
