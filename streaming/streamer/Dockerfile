@@ -30,6 +30,7 @@ RUN apt-get update && \
     libxtst6 \
     libxxf86vm1 \
     sqlite3 \
+    x11-utils \
     xdotool && \
   rm -rf /var/lib/apt/lists/*
 
