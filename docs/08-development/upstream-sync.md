@@ -40,7 +40,7 @@ Comparing this repository with the last upstream commit merged into it:
   - `lib/saves/flashSaves.ts`;
   - `.gitea/`;
   - the discovery backend;
-  - migrations 009 and up.
+  - migrations upstream doesn't have.
 
   Upstream never touches these, but a change elsewhere can still need matching
   work here.
