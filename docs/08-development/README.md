@@ -15,6 +15,7 @@ the Dotcom Arcade application.
 5. **[Testing Guide](./testing-guide.md)** - Testing approach and best practices
 6. **[Debugging Guide](./debugging.md)** - Debugging tips and troubleshooting
 7. **[Common Pitfalls](./common-pitfalls.md)** - Known issues and solutions
+8. **[Upstream Sync](./upstream-sync.md)** - Merging changes from flashpoint-web
 
 ## Quick Start
 

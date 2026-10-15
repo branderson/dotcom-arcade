@@ -125,6 +125,7 @@ for Flashpoint Ultimate.
 - [Testing Guide](08-development/testing-guide.md) - Testing approach
 - [Debugging](08-development/debugging.md) - Debugging tips
 - [Common Pitfalls](08-development/common-pitfalls.md) - Known issues
+- [Upstream Sync](08-development/upstream-sync.md) - Merging changes from flashpoint-web
 
 ### 09. Deployment
 
