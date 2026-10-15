@@ -25,7 +25,7 @@ export function PortalLayout() {
   const searchRef = useRef<HTMLInputElement>(null);
   const [rolling, setRolling] = useState(false);
 
-  useEffect(() => applyPortalScheme('chilled'), []);
+  useEffect(() => applyPortalScheme('slate'), []);
   useMatureSync();
 
   const playRandom = async () => {

@@ -8,8 +8,8 @@ export interface PortalScheme {
 }
 
 export const PORTAL_SCHEMES = {
-  chilled: {
-    label: 'Chilled',
+  slate: {
+    label: 'Slate',
     tokens: {
       '--p-bg': '#4c6878',
       '--p-bg-mix': '#2f4553',
