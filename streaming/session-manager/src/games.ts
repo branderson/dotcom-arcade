@@ -59,7 +59,7 @@ export class GameCatalog {
         return null;
       }
       const page = await this.readContent(gameId, row, row.cmd).catch(() => null);
-      return even((page && appletSize(page.toString('latin1'))) ?? DEFAULT_SIZE);
+      return ((page && appletSize(page.toString('latin1'))) ?? DEFAULT_SIZE);
     }
     const program = await this.launchProgram(row);
     if (!program) {
@@ -68,19 +68,19 @@ export class GameCatalog {
     const url = row.cmd.match(/https?:\/\/[^\s"']+/)?.[0];
     if (!url) {
       const exe = await readFile(program).catch(() => null);
-      return even((exe && projectorStageSize(exe)) ?? DEFAULT_SIZE);
+      return ((exe && projectorStageSize(exe)) ?? DEFAULT_SIZE);
     }
     const content = await this.readContent(gameId, row, url).catch(() => null);
     const extension = path.extname(new URL(url).pathname).toLowerCase();
     if (['.dcr', '.dir', '.dxr', '.cct', '.cst'].includes(extension)) {
-      return even((content && directorStageSize(content)) ?? DEFAULT_SIZE);
+      return ((content && directorStageSize(content)) ?? DEFAULT_SIZE);
     }
     if (extension === '.swf') {
-      // The exact stage: in full screen, games that set noScale keep their native size
-      return even((content && swfStageSize(content)) ?? DEFAULT_SIZE);
+      // The exact stage, so the movie fills the display without scaling
+      return ((content && swfStageSize(content)) ?? DEFAULT_SIZE);
     }
     const embed = content && embedSize(content.toString('latin1'));
-    return even(embed ? { width: embed.width + 2 * PAGE_MARGIN, height: embed.height + 2 * PAGE_MARGIN } : BROWSER_SIZE);
+    return (embed ? { width: embed.width + 2 * PAGE_MARGIN, height: embed.height + 2 * PAGE_MARGIN } : BROWSER_SIZE);
   }
 
   /**
@@ -149,11 +149,6 @@ async function resolveCaseInsensitive(root: string, relative: string): Promise<s
     current = path.join(current, match);
   }
   return (await stat(current).catch(() => null))?.isFile() ? current : null;
-}
-
-/** H.264 needs even dimensions. */
-function even({ width, height }: Size): Size {
-  return { width: width + (width % 2), height: height + (height % 2) };
 }
 
 /** Reads the stage size from a SWF header: a rect of twips after the 8-byte header. */

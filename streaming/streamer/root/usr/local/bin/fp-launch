@@ -47,8 +47,19 @@ case ${app,,} in
     mkdir -p "$HOME/saves/Flash_Player" "$HOME/.macromedia"
     [[ -e $HOME/.macromedia/Flash_Player ]] || ln -s "$HOME/saves/Flash_Player" "$HOME/.macromedia/Flash_Player"
     if [[ ${app,,} == 'fpsoftware\flash\'* ]]; then
-      # Full screen hides the projector's menu bar and scales the movie to the display
-      (xdotool search --sync --onlyvisible --name 'Flash Player' windowactivate --sync key ctrl+f) &
+      # Hide the projector's menu bar by moving it above the display, and fill
+      # the display with the movie. Not full screen, which some games, such as
+      # Bloons, don't play right in. The window opens at the movie's size plus
+      # the menu bar, which gives the menu bar's height.
+      (
+        wid=$(xdotool search --sync --onlyvisible --name 'Flash Player' | head -1)
+        eval "$(xdotool getwindowgeometry --shell "$wid")"
+        read -r display_width display_height < <(xdotool getdisplaygeometry)
+        menu=$((HEIGHT - ${GAME_HEIGHT:-$display_height}))
+        ((menu > 0 && menu < 100)) || menu=0
+        xdotool windowsize "$wid" "$display_width" $((display_height + menu)) \
+          windowmove "$wid" 0 $((-menu)) windowactivate "$wid"
+      ) &
     fi
     cd "${argv[0]}"
     exec "${argv[@]:1}" ;;

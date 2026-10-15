@@ -46,8 +46,11 @@ export class DockerDriver implements Driver {
         `PUID=${uid}`,
         `PGID=${gid}`,
         `SUBFOLDER=${streamPath(id)}`,
-        `SELKIES_MANUAL_WIDTH=${size.width}`,
-        `SELKIES_MANUAL_HEIGHT=${size.height}`,
+        // The game's exact size, and the display's, rounded up to even for H.264
+        `GAME_WIDTH=${size.width}`,
+        `GAME_HEIGHT=${size.height}`,
+        `SELKIES_MANUAL_WIDTH=${size.width + (size.width % 2)}`,
+        `SELKIES_MANUAL_HEIGHT=${size.height + (size.height % 2)}`,
         'SELKIES_UI_SHOW_SIDEBAR=false',
         'HARDEN_DESKTOP=true',
         'RESTART_APP=true',
