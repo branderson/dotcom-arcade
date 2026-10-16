@@ -58,8 +58,8 @@ jobs:
           images: ghcr.io/${{ steps.owner.outputs.name }}/${{ matrix.image }}
           tags: type=raw,value=latest
 
-      # GHCR sometimes answers the base image pull with 429 Too Many Requests
-      # on GitHub's shared runners; it clears within minutes, so retry once.
+      # GHCR sometimes answers the streamer's base image pull with 429 Too Many
+      # Requests; it clears within minutes, so retry once.
       - id: build
         uses: docker/build-push-action@v6
         continue-on-error: true
