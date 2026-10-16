@@ -1,5 +1,8 @@
 # Dotcom Arcade
 
+> **This is a read-only mirror.** Dotcom Arcade is developed on a private
+> forge, and issues and pull requests are not accepted here.
+
 **Your own Flash-era game portal, powered by
 [Flashpoint Ultimate](https://flashpointarchive.org/).**
 
