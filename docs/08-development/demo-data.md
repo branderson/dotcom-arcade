@@ -34,5 +34,10 @@ no real games. To retake them after a UI change:
 3. Run `node scripts/demo/take-screenshots.mjs http://localhost:3100`.
 
 The script creates the first account, plays a few games for "Jump back in",
-moves the Time Machine to the week the demo fills, and writes `home.png`,
-`game.png` and `playing.png`.
+fixes the browser's date so the Game of the Day is always the same, moves the
+Time Machine to the week the demo fills, and writes `home.png`, `game.png` and
+`playing.png`.
+
+Each game's tile and screenshot is a small scene drawn for its genre (a road
+for driving games, a block grid for puzzles, and so on), with layouts varied by
+the game's tags and seeded by its title, so every build draws the same art.

@@ -70,6 +70,9 @@ async function settle() {
   await page.waitForTimeout(500);
 }
 
+// The Game of the Day follows the browser's date; this one picks The Lost Floppy
+await page.clock.setFixedTime(new Date('2026-06-08T12:00:00'));
+
 await page.goto('/login');
 await page.getByPlaceholder('Enter your username').fill(user.username);
 await page.getByPlaceholder('Enter your password').fill(user.password);
