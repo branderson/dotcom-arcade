@@ -58,7 +58,28 @@ jobs:
           images: ghcr.io/${{ steps.owner.outputs.name }}/${{ matrix.image }}
           tags: type=raw,value=latest
 
-      - uses: docker/build-push-action@v6
+      # GHCR sometimes answers the base image pull with 429 Too Many Requests
+      # on GitHub's shared runners; it clears within minutes, so retry once.
+      - id: build
+        uses: docker/build-push-action@v6
+        continue-on-error: true
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+          build-args: |
+            VERSION=${{ steps.version.outputs.sha }}
+          provenance: false
+
+      - name: Wait before retrying
+        if: steps.build.outcome == 'failure'
+        run: sleep 120
+
+      - name: Retry the build
+        if: steps.build.outcome == 'failure'
+        uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
           push: true
