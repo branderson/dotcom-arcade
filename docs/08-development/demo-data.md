@@ -31,7 +31,9 @@ no real games. To retake them after a UI change:
 1. Build the frontend (`npm run build`), then run the app on the demo data with
    a fresh user database, serving the built frontend (`SERVE_FRONTEND=true`).
 2. Install Playwright: `npm install --no-save playwright && npx playwright install chromium`.
-3. Run `node scripts/demo/take-screenshots.mjs http://localhost:3100`.
+3. Run `node scripts/demo/take-screenshots.mjs http://localhost:3100`. Restart
+   the app with a fresh user database before running it again: repeated runs
+   trip the login rate limit.
 
 The script creates the first account, plays a few games for "Jump back in",
 fixes the browser's date so the Game of the Day is always the same, moves the
