@@ -9,7 +9,7 @@ BRANCH=master
 UPSTREAM=refs/remotes/upstream/$BRANCH
 
 cd "$(git rev-parse --show-toplevel)"
-git fetch -q "$URL" "+$BRANCH:$UPSTREAM"
+git fetch -q --no-tags "$URL" "+$BRANCH:$UPSTREAM"
 base=$(git merge-base HEAD "$UPSTREAM")
 count=$(git rev-list --count "$base..$UPSTREAM")
 
