@@ -29,13 +29,11 @@ All three are built from this repository by `docker compose up -d --build`.
 ### Prebuilt images
 
 Images are published to GitHub's container registry. To pull them instead of
-building, set `IMAGE_PREFIX` in `.env`, ending in `/`, and optionally
-`IMAGE_TAG`. `latest` is the newest release, `1.2` the newest of a minor
-version, and `main` follows the `main` branch.
+building, set `IMAGE_PREFIX` in `.env`, ending in `/`. There's one tag,
+`latest`, built from the tip of `main`.
 
 ```sh
 IMAGE_PREFIX=ghcr.io/branderson/
-IMAGE_TAG=latest
 ```
 
 Then run `docker compose pull && docker compose up -d`. Images from another
@@ -53,8 +51,7 @@ Two workflows build the same images with the same tags:
 
 `.gitea/workflows/images.yml` builds all three images on Gitea Actions and
 pushes them to the Gitea instance's container registry, under the repository's
-owner. Pushes to `main` publish a `main` tag; `v1.2.3` tags publish `1.2.3`,
-`1.2` and `latest`. Its jobs run docker builds, so they need a runner labelled
+owner. Each push to `main` publishes `latest`. Its jobs run docker builds, so they need a runner labelled
 `dejima-privileged`; jobs that don't build images should use `dejima-confined`.
 It also needs a repository secret, `REGISTRY_TOKEN`: an access token with
 package write access, belonging to the repository's owner, whom the workflow
