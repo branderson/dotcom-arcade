@@ -1,0 +1,109 @@
+<!doctype html>
+<!-- Pixel Penguin Panic: a tiny game made for Dotcom Arcade's demo data. Catch
+     the fish, dodge the rocks. Plays itself until a key is pressed. -->
+<html>
+<head>
+<meta charset="utf-8">
+<title>Pixel Penguin Panic</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0b1730; }
+  canvas { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<canvas id="game" width="640" height="480"></canvas>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = 640, H = 480, GROUND = 420;
+let penguin = { x: W / 2, dir: 0 }, things = [], score = 0, best = 0, lives = 3;
+let demo = true, tick = 0, flash = 0;
+const keys = {};
+
+addEventListener('keydown', (e) => { keys[e.key] = true; if (demo) { demo = false; reset(); } });
+addEventListener('keyup', (e) => { keys[e.key] = false; });
+canvas.addEventListener('pointerdown', () => { if (demo) { demo = false; reset(); } });
+canvas.addEventListener('pointermove', (e) => {
+  if (demo) return;
+  const r = canvas.getBoundingClientRect();
+  penguin.x = ((e.clientX - r.left) / r.width) * W;
+});
+
+function reset() { things = []; score = 0; lives = 3; penguin.x = W / 2; }
+
+function spawn() {
+  const rock = Math.random() < 0.3;
+  things.push({ x: 30 + Math.random() * (W - 60), y: -20, vy: 2 + Math.random() * 2 + score / 400, rock });
+}
+
+function update() {
+  tick++;
+  if (tick % 28 === 0) spawn();
+  if (demo) {
+    const fish = things.filter((t) => !t.rock).sort((a, b) => b.y - a.y)[0];
+    const target = fish ? fish.x : W / 2;
+    penguin.x += Math.max(-5, Math.min(5, target - penguin.x));
+  } else {
+    if (keys.ArrowLeft || keys.a) penguin.x -= 6;
+    if (keys.ArrowRight || keys.d) penguin.x += 6;
+  }
+  penguin.x = Math.max(24, Math.min(W - 24, penguin.x));
+  for (const t of things) {
+    t.y += t.vy;
+    if (t.y > GROUND - 40 && t.y < GROUND && Math.abs(t.x - penguin.x) < 30) {
+      t.done = true;
+      if (t.rock) { lives--; flash = 12; if (lives <= 0) { best = Math.max(best, score); reset(); } }
+      else score += 10;
+    }
+    if (t.y > H) t.done = true;
+  }
+  things = things.filter((t) => !t.done);
+  if (flash > 0) flash--;
+}
+
+function drawPenguin(x) {
+  const y = GROUND;
+  ctx.fillStyle = '#111827'; ctx.beginPath(); ctx.ellipse(x, y - 26, 22, 28, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.ellipse(x, y - 22, 14, 20, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.fillRect(x - 9, y - 46, 7, 7); ctx.fillRect(x + 3, y - 46, 7, 7);
+  ctx.fillStyle = '#000'; ctx.fillRect(x - 6, y - 44, 3, 4); ctx.fillRect(x + 6, y - 44, 3, 4);
+  ctx.fillStyle = '#f59e0b'; ctx.fillRect(x - 5, y - 36, 10, 5); ctx.fillRect(x - 16, y - 2, 12, 4); ctx.fillRect(x + 4, y - 2, 12, 4);
+}
+
+function drawFish(t) {
+  ctx.fillStyle = '#38bdf8';
+  ctx.beginPath(); ctx.ellipse(t.x, t.y, 14, 8, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(t.x + 12, t.y); ctx.lineTo(t.x + 22, t.y - 8); ctx.lineTo(t.x + 22, t.y + 8); ctx.fill();
+  ctx.fillStyle = '#000'; ctx.fillRect(t.x - 8, t.y - 3, 3, 3);
+}
+
+function drawRock(t) {
+  ctx.fillStyle = '#64748b';
+  ctx.beginPath(); ctx.arc(t.x, t.y, 13, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#94a3b8'; ctx.fillRect(t.x - 6, t.y - 7, 5, 4);
+}
+
+function draw() {
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#1e3a8a'); sky.addColorStop(1, '#7dd3fc');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  for (let i = 0; i < 40; i++) ctx.fillRect((i * 97 + tick * 0.3) % W, (i * 53) % 260, 2, 2);
+  ctx.fillStyle = '#e0f2fe'; ctx.fillRect(0, GROUND, W, H - GROUND);
+  ctx.fillStyle = '#bae6fd'; for (let x = 0; x < W; x += 40) ctx.fillRect(x, GROUND, 20, 6);
+  things.forEach((t) => (t.rock ? drawRock(t) : drawFish(t)));
+  drawPenguin(penguin.x);
+  if (flash % 4 > 1) { ctx.fillStyle = 'rgba(239,68,68,0.3)'; ctx.fillRect(0, 0, W, H); }
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 20px monospace';
+  ctx.fillText(`SCORE ${String(score).padStart(5, '0')}`, 16, 32);
+  ctx.fillText('♥'.repeat(lives), W - 80, 32);
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 34px monospace'; ctx.fillText('PIXEL PENGUIN PANIC', W / 2, 90);
+  if (demo && Math.floor(tick / 30) % 2) { ctx.font = 'bold 18px monospace'; ctx.fillText('PRESS ANY KEY', W / 2, 124); }
+  ctx.textAlign = 'left';
+}
+
+(function loop() { update(); draw(); requestAnimationFrame(loop); })();
+</script>
+</body>
+</html>
