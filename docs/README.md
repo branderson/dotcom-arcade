@@ -127,6 +127,7 @@ for Flashpoint Ultimate.
 - [Common Pitfalls](08-development/common-pitfalls.md) - Known issues
 - [Upstream Sync](08-development/upstream-sync.md) - Merging changes from flashpoint-web
 - [GitHub Mirror](08-development/github-mirror.md) - Publishing to GitHub and GHCR
+- [Demo Data](08-development/demo-data.md) - Made-up games for development and screenshots
 
 ### 09. Deployment
 

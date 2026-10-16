@@ -17,6 +17,7 @@ the Dotcom Arcade application.
 7. **[Common Pitfalls](./common-pitfalls.md)** - Known issues and solutions
 8. **[Upstream Sync](./upstream-sync.md)** - Merging changes from flashpoint-web
 9. **[GitHub Mirror](./github-mirror.md)** - Publishing to GitHub and GHCR
+10. **[Demo Data](./demo-data.md)** - Made-up games for development and screenshots
 
 ## Quick Start
 
